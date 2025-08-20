@@ -1,0 +1,21 @@
+# Needed to log GenAI metrics in App Insights
+# SEMANTICKERNEL_EXPERIMENTAL_GENAI_ENABLE_OTEL_DIAGNOSTICS_SENSITIVE = true
+
+# Azure App Insigths connection string for telemetry
+# AZURE_INSIGHTS_CONNECTION_STRING = ""
+
+# AI Search Index Name
+# AISEARCH_INDEX_NAME = ""
+
+# Your AI Foundry Project endpoint, found in the Foundry Project Overview page
+AIPROJECT_ENDPOINT = "https://<host>/api/projects/<project-name>"
+
+# Your AI Foundry project chat model
+CHAT_MODEL_ENDPOINT = "https://<host>/openai/deployments/<model>/chat/completions?api-version=<version>"
+CHAT_MODEL_API_KEY = "<your-api-key>"
+CHAT_MODEL = "<model-version>"
+
+# Agent Ids
+TACTICS_DOT_TOOLS_AGENT_ID = "<agent-id>"
+PATCH_NOTES_RESEARCHER_AGENT_ID = "<agent-id>"
+MAIN_AGENT_ID = "<agent-id>"

@@ -1,0 +1,15 @@
+[project]
+name = "tft-agent-root"
+version = "0.0.0"
+description = "TFT Agent uv workspace root"
+requires-python = ">=3.12,<3.13"
+
+[tool.uv]
+required-version = "0.8.9"
+
+[tool.uv.workspace]
+members = ["src/*"]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4

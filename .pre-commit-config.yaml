@@ -1,0 +1,29 @@
+# pre-commit is a framework for managing and maintaining multi-language pre-commit hooks.
+# https://pre-commit.com/
+repos:
+  # Global Hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  # Python Hooks
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.9
+    hooks:
+      - id: ruff-format
+        name: format (python)
+        args:
+          - --config
+          - pyproject.toml
+
+      - id: ruff-check
+        name: lint (python)
+        args:
+          - --fix
+          - --config
+          - pyproject.toml
