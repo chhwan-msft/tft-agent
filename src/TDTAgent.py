@@ -6,8 +6,7 @@ import requests
 import time
 import json
 
-from bs4 import BeautifulSoup
-from azure.ai.agents.models import FunctionTool, MessageRole
+from azure.ai.agents.models import MessageRole
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
 from dotenv import load_dotenv
@@ -71,12 +70,15 @@ Your response should be data-rich, accurate, and formatted for easy interpretati
 
 user_prompt = "Never call the tool get_comp_stats, it is not ready for use yet. The following is the user's query: "
 
-class TDTAgent:
 
+class TDTAgent:
     """
     A class to represent the Tactis Dot Tools Agent.
     """
-    @kernel_function(description='An agent that pulls latest patch notes and makes predictions based on balance changes.')
+
+    @kernel_function(
+        description="An agent that pulls latest patch notes and makes predictions based on balance changes."
+    )
     def process_patch_notes(self, query: str) -> str:
         """
         Creates an Azure AI Agent that pulls stats from tactics.tools.
@@ -88,24 +90,21 @@ class TDTAgent:
         print("Calling TDTAgent...")
 
         # Connecting to our Azure AI Foundry project, which will allow us to use the deployed gpt-4o model for our agent
-        project_client = AIProjectClient(
-            os.environ["AIPROJECT_ENDPOINT"],
-            DefaultAzureCredential()
-            )
-        
+        project_client = AIProjectClient(os.environ["AIPROJECT_ENDPOINT"], DefaultAzureCredential())
+
         # General stats on units, items, traits
         def get_general_stats():
-            url = f"https://d3.tft.tools/stats2/general/1100/15151/1"
-            response = requests.get(url)
-            return json.dumps(response.json())
-            
-        # Stats on high performing comps
-        def get_comp_stats():
-            url = f"https://api.tft.tools/team-compositions/1/15151"
+            url = "https://d3.tft.tools/stats2/general/1100/15151/1"
             response = requests.get(url)
             return json.dumps(response.json())
 
-        functions = FunctionTool({get_general_stats, get_comp_stats})
+        # Stats on high performing comps
+        def get_comp_stats():
+            url = "https://api.tft.tools/team-compositions/1/15151"
+            response = requests.get(url)
+            return json.dumps(response.json())
+
+        # functions = FunctionTool({get_general_stats, get_comp_stats})
 
         # Get existing agent from Foundry project
         tdt_agent = project_client.agents.get_agent(os.environ["TACTICS_DOT_TOOLS_AGENT_ID"])
@@ -116,14 +115,14 @@ class TDTAgent:
         #     tools=functions.definitions
         # )
 
-        # Create a thread which is a conversation session between an agent and a user. 
+        # Create a thread which is a conversation session between an agent and a user.
         thread = project_client.agents.threads.create()
 
         # Create a message in the thread with the user asking for information about the patch notes
-        message = project_client.agents.messages.create(
+        _ = project_client.agents.messages.create(
             thread_id=thread.id,
             role="user",
-            content=f"{user_prompt}{query}", # The user's message
+            content=f"{user_prompt}{query}",  # The user's message
         )
         # Run the agent to process the message in the thread
         run = project_client.agents.runs.create(thread_id=thread.id, agent_id=tdt_agent.id)
@@ -146,7 +145,9 @@ class TDTAgent:
                     elif tool_call.function.name == "get_comp_stats":
                         output = get_comp_stats()
                         tool_outputs.append({"tool_call_id": tool_call.id, "output": output})
-                project_client.agents.runs.submit_tool_outputs(thread_id=thread.id, run_id=run.id, tool_outputs=tool_outputs)
+                project_client.agents.runs.submit_tool_outputs(
+                    thread_id=thread.id, run_id=run.id, tool_outputs=tool_outputs
+                )
 
         # Check if the run was successful
         if run.status == "failed":
@@ -156,8 +157,10 @@ class TDTAgent:
         # project_client.agents.delete_agent(patch_notes_agent.id)
 
         # Get the last message from the thread
-        last_msg = project_client.agents.messages.get_last_message_text_by_role(thread_id=thread.id,role=MessageRole.AGENT)
-      
+        last_msg = project_client.agents.messages.get_last_message_text_by_role(
+            thread_id=thread.id, role=MessageRole.AGENT
+        )
+
         print("TDT agent completed successfully!")
 
         return str(last_msg)
