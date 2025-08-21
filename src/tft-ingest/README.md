@@ -25,24 +25,6 @@ This project ingests Teamfight Tactics (TFT) Set 15 static data (Units, Traits, 
   - Azure OpenAI deployment for embeddings (e.g., text-embedding-3-large)
 - CommunityDragon endpoints (configured via the project's `.env`)
 
-## Project structure
-
-```
-tft-ingest/
-├─ README.md
-├─ requirements.txt
-├─ .env
-└─ src/
-   ├─ build_docs.py
-   ├─ blob_upload.py
-   ├─ cdragon_fetch.py
-   ├─ create_indexes.py
-   ├─ gen_item_components.py
-   ├─ indexers.py
-   ├─ item_components_set15.json
-   └─ main.py
-```
-
 ## Setup
 
 1. Install dependencies
