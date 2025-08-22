@@ -78,7 +78,7 @@ def fetch_traits():
 def _load_item_components_map():
     """
     Mapping keyed by nameId (e.g., 'TFT_Item_InfinityEdge') with:
-      { "components": ["B.F. Sword", "Sparring Gloves"], "components_ids": [...] }
+        { "components": ["B.F. Sword", "Sparring Gloves"] }
     """
     path = os.path.join(os.path.dirname(__file__), "item_components_set15.json")
     if not os.path.exists(path):
@@ -109,7 +109,6 @@ def fetch_items():
             "source_url": ITEMS_URL,
         }
 
-        if nameId and nameId in comp_map:
+        if nameId in comp_map:
             rec["components"] = comp_map[nameId].get("components", [])
-            rec["components_ids"] = comp_map[nameId].get("components_ids", [])
         items.append(rec)

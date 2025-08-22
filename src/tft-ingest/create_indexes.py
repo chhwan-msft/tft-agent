@@ -82,7 +82,6 @@ def create_items_index():
                 "filterable": True,
                 "facetable": True,
             },
-            {"name": "components_ids", "type": "Collection(String)", "filterable": True, "facetable": True},
             {"name": "content", "type": "String", "searchable": True},
             {"name": "url", "type": "String"},
             _content_vector_field(),

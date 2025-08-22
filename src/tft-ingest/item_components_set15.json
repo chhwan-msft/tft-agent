@@ -1,1 +1,332 @@
-{}
+{
+  "TFT_Item_AdaptiveHelm": {
+    "components": [
+      "tear-of-the-goddess",
+      "negatron-cloak"
+    ]
+  },
+  "TFT_Item_ArchangelsStaff": {
+    "components": [
+      "tear-of-the-goddess",
+      "needlessly-large-rod"
+    ]
+  },
+  "TFT15_Item_BastionEmblemItem": {
+    "components": [
+      "frying_pan",
+      "chain-vest"
+    ]
+  },
+  "TFT15_Item_BattleAcademiaEmblemItem": {
+    "components": [
+      "spatula",
+      "tear-of-the-goddess"
+    ]
+  },
+  "TFT_Item_Bloodthirster": {
+    "components": [
+      "bf-sword",
+      "negatron-cloak"
+    ]
+  },
+  "TFT_Item_Crownguard": {
+    "components": [
+      "needlessly-large-rod",
+      "chain-vest"
+    ]
+  },
+  "TFT15_Item_CrystalRoseEmblemItem": {
+    "components": [
+      "spatula",
+      "giants-belt"
+    ]
+  },
+  "TFT15_Item_ChallengerEmblemItem": {
+    "components": [
+      "frying_pan",
+      "recurve-bow"
+    ]
+  },
+  "TFT15_Item_EdgelordEmblemItem": {
+    "components": [
+      "frying_pan",
+      "bf-sword"
+    ]
+  },
+  "TFT_Item_GuardianAngel": {
+    "components": [
+      "bf-sword",
+      "chain-vest"
+    ]
+  },
+  "TFT_Item_SpectralGauntlet": {
+    "components": [
+      "negatron-cloak",
+      "giants-belt"
+    ]
+  },
+  "TFT15_Item_DestroyerEmblemItem": {
+    "components": [
+      "frying_pan",
+      "sparring-gloves"
+    ]
+  },
+  "TFT_Item_GargoyleStoneplate": {
+    "components": [
+      "chain-vest",
+      "negatron-cloak"
+    ]
+  },
+  "TFT_Item_MadredsBloodrazor": {
+    "components": [
+      "bf-sword",
+      "recurve-bow"
+    ]
+  },
+  "TFT_Item_GuinsoosRageblade": {
+    "components": [
+      "needlessly-large-rod",
+      "recurve-bow"
+    ]
+  },
+  "TFT_Item_UnstableConcoction": {
+    "components": [
+      "sparring-gloves",
+      "tear-of-the-goddess"
+    ]
+  },
+  "TFT15_Item_HeavyweightEmblemItem": {
+    "components": [
+      "frying_pan",
+      "giants-belt"
+    ]
+  },
+  "TFT_Item_HextechGunblade": {
+    "components": [
+      "bf-sword",
+      "needlessly-large-rod"
+    ]
+  },
+  "TFT_Item_InfinityEdge": {
+    "components": [
+      "bf-sword",
+      "sparring-gloves"
+    ]
+  },
+  "TFT_Item_IonicSpark": {
+    "components": [
+      "needlessly-large-rod",
+      "negatron-cloak"
+    ]
+  },
+  "TFT_Item_JeweledGauntlet": {
+    "components": [
+      "sparring-gloves",
+      "needlessly-large-rod"
+    ]
+  },
+  "TFT15_Item_JuggernautEmblemItem": {
+    "components": [
+      "frying_pan",
+      "negatron-cloak"
+    ]
+  },
+  "TFT_Item_RunaansHurricane": {
+    "components": [
+      "recurve-bow",
+      "negatron-cloak"
+    ]
+  },
+  "TFT_Item_LastWhisper": {
+    "components": [
+      "recurve-bow",
+      "sparring-gloves"
+    ]
+  },
+  "TFT15_Item_RingKingsEmblemItem": {
+    "components": [
+      "spatula",
+      "sparring-gloves"
+    ]
+  },
+  "TFT_Item_Morellonomicon": {
+    "components": [
+      "needlessly-large-rod",
+      "giants-belt"
+    ]
+  },
+  "TFT_Item_Leviathan": {
+    "components": [
+      "recurve-bow",
+      "giants-belt"
+    ]
+  },
+  "TFT15_Item_ProdigyEmblemItem": {
+    "components": [
+      "frying_pan",
+      "tear-of-the-goddess"
+    ]
+  },
+  "TFT_Item_FrozenHeart": {
+    "components": [
+      "chain-vest",
+      "tear-of-the-goddess"
+    ]
+  },
+  "TFT_Item_Quicksilver": {
+    "components": [
+      "negatron-cloak",
+      "sparring-gloves"
+    ]
+  },
+  "TFT15_Item_SpellslingerEmblemItem": {
+    "components": [
+      "frying_pan",
+      "needlessly-large-rod"
+    ]
+  },
+  "TFT15_Item_SoulFighterEmblemItem": {
+    "components": [
+      "spatula",
+      "bf-sword"
+    ]
+  },
+  "TFT_Item_SpearOfShojin": {
+    "components": [
+      "bf-sword",
+      "tear-of-the-goddess"
+    ]
+  },
+  "TFT_Item_Redemption": {
+    "components": [
+      "tear-of-the-goddess",
+      "giants-belt"
+    ]
+  },
+  "TFT15_Item_StarGuardianEmblemItem": {
+    "components": [
+      "spatula",
+      "needlessly-large-rod"
+    ]
+  },
+  "TFT_Item_NightHarvester": {
+    "components": [
+      "sparring-gloves",
+      "chain-vest"
+    ]
+  },
+  "TFT_Item_SteraksGage": {
+    "components": [
+      "bf-sword",
+      "giants-belt"
+    ]
+  },
+  "TFT15_Item_ShotcallerEmblemItem": {
+    "components": [
+      "spatula",
+      "negatron-cloak"
+    ]
+  },
+  "TFT_Item_PowerGauntlet": {
+    "components": [
+      "giants-belt",
+      "sparring-gloves"
+    ]
+  },
+  "TFT_Item_RedBuff": {
+    "components": [
+      "chain-vest",
+      "giants-belt"
+    ]
+  },
+  "TFT15_Item_SupremeCellsEmblemItem": {
+    "components": [
+      "spatula",
+      "recurve-bow"
+    ]
+  },
+  "TFT_Item_TacticiansRing": {
+    "components": [
+      "frying_pan",
+      "spatula"
+    ]
+  },
+  "TFT_Item_TitansResolve": {
+    "components": [
+      "chain-vest",
+      "recurve-bow"
+    ]
+  },
+  "TFT_Item_StatikkShiv": {
+    "components": [
+      "tear-of-the-goddess",
+      "recurve-bow"
+    ]
+  },
+  "TFT15_Item_EmpyreanEmblemItem": {
+    "components": [
+      "spatula",
+      "chain-vest"
+    ]
+  },
+  "TFT_Item_BlueBuff": {
+    "components": [
+      "tear-of-the-goddess",
+      "tear-of-the-goddess"
+    ]
+  },
+  "TFT_Item_BrambleVest": {
+    "components": [
+      "chain-vest",
+      "chain-vest"
+    ]
+  },
+  "TFT_Item_Deathblade": {
+    "components": [
+      "bf-sword",
+      "bf-sword"
+    ]
+  },
+  "TFT_Item_DragonsClaw": {
+    "components": [
+      "negatron-cloak",
+      "negatron-cloak"
+    ]
+  },
+  "TFT_Item_RabadonsDeathcap": {
+    "components": [
+      "needlessly-large-rod",
+      "needlessly-large-rod"
+    ]
+  },
+  "TFT_Item_RapidFireCannon": {
+    "components": [
+      "recurve-bow",
+      "recurve-bow"
+    ]
+  },
+  "TFT_Item_ForceOfNature": {
+    "components": [
+      "spatula",
+      "spatula"
+    ]
+  },
+  "TFT_Item_TacticiansScepter": {
+    "components": [
+      "frying_pan",
+      "frying_pan"
+    ]
+  },
+  "TFT_Item_ThiefsGloves": {
+    "components": [
+      "sparring-gloves",
+      "sparring-gloves"
+    ]
+  },
+  "TFT_Item_WarmogsArmor": {
+    "components": [
+      "giants-belt",
+      "giants-belt"
+    ]
+  }
+}

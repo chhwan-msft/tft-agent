@@ -1,5 +1,6 @@
 import os
-from dotenv import load_dotenv
+from pathlib import Path
+from dotenv import load_dotenv, find_dotenv
 
 from cdragon_fetch import fetch_units, fetch_items, fetch_traits
 from build_docs import unit_to_doc, item_to_doc, trait_to_doc
@@ -9,7 +10,20 @@ from indexers import create_blob_datasource, create_embedding_skillset, create_i
 
 
 def main():
-    load_dotenv()
+    # Load .env located next to this file first (deterministic).
+    # If it exists, allow it to override other env values.
+    env_path = Path(__file__).resolve().parent / ".env"
+    if env_path.exists():
+        load_dotenv(dotenv_path=env_path, override=True)
+        print(f"Loaded .env from {env_path}")
+    else:
+        # Fallback: let python-dotenv locate a .env (e.g., project root).
+        found = find_dotenv()
+        if found:
+            load_dotenv(dotenv_path=found, override=False)
+            print(f"Loaded .env from {found}")
+        else:
+            print("No .env file found; relying on environment variables")
 
     # --- Fetch & normalize ---
     units = [unit_to_doc(u) for u in fetch_units()]

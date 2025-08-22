@@ -9,7 +9,6 @@ CDRAGON_ITEMS_URL = os.getenv(
     "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/tftitems.json",
 )
 MOBALYTICS_URL = "https://mobalytics.gg/tft/items/combined"
-BLITZ_URL = "https://blitz.gg/tft/items/overview"
 
 OUT = os.path.join(os.path.dirname(__file__), "item_components_set15.json")
 
@@ -46,45 +45,52 @@ def parse_mobalytics():
     r.raise_for_status()
     soup = BeautifulSoup(r.text, "lxml")
     mapping = {}
-    cards = soup.find_all(["article", "div", "section"])
-    for c in cards:
-        title = c.find(["h2", "h3", "h4"])
-        if not title:
+
+    # Mobalytics uses nested divs with class names like:
+    # parent: "m-jbp8l2 e5d3hmh5"
+    # name container: direct child div with class "m-1lt86v1 e5d3hmh7" (the actual display name is in the next sibling div)
+    # components container: sibling div with class "m-1d1ieym e5d3hmh4" containing <img alt="Component Name"/>
+    parents = soup.select("div.m-jbp8l2.e5d3hmh5")
+    print(f"[gen_item_components] Found {len(parents)} parent items in Mobalytics")
+    for idx, p in enumerate(parents):
+        # name marker div (contains an img and a child div with the display name)
+        name_marker = p.select_one("div.m-1lt86v1.e5d3hmh7")
+        if not name_marker:
+            print(f"[gen_item_components] Skipping parent {idx} due to missing name marker")
             continue
-        item_name = title.get_text(strip=True)
+
+        # primary name is in a child div with class like m-dll4w4 e5d3hmh3
+        name_child = name_marker.select_one("div.m-dll4w4")
+        if name_child and name_child.get_text(strip=True):
+            item_name = name_child.get_text(strip=True)
+        else:
+            # fallback: remove images from name_marker and take remaining text
+            for img in name_marker.find_all("img"):
+                img.extract()
+            item_name = name_marker.get_text(" ", strip=True)
+
         if not item_name:
+            print(f"[gen_item_components] Skipping parent {idx} due to missing item name")
             continue
-        text = c.get_text(" ", strip=True)
-        if "Recipe" not in text and "Components" not in text:
-            continue
+
+        # components container and component names from img alt attributes
+        comp_div = p.select_one("div.m-1d1ieym.e5d3hmh4")
         comp_labels = []
-        for li in c.find_all("li"):
-            t = li.get_text(" ", strip=True)
-            if t and len(t) <= 40:
-                comp_labels.append(t)
-        comp_labels = [x for x in comp_labels if x.lower() not in ("recipe", "components")]
+        if comp_div:
+            for img in comp_div.find_all("img", alt=True):
+                alt = img.get("alt", "").strip()
+                # Allow duplicates: some recipes use two of the same component (two img tags
+                # with the same alt). Append every valid alt we find in document order.
+                if alt and len(alt) <= 40:
+                    comp_labels.append(alt)
+        else:
+            print(f"[gen_item_components] Skipping {item_name} due to missing components container")
+
         if len(comp_labels) >= 2:
             mapping[item_name] = comp_labels[:2]
-    return mapping
+        else:
+            print(f"[gen_item_components] Skipping {item_name} due to insufficient components: {comp_labels}")
 
-
-def parse_blitz():
-    r = requests.get(BLITZ_URL, headers=HEADERS, timeout=30)
-    r.raise_for_status()
-    soup = BeautifulSoup(r.text, "lxml")
-    mapping = {}
-    cards = soup.find_all(["article", "section", "div"])
-    for c in cards:
-        hdr = c.find(["h3", "h2", "h4"])
-        if not hdr:
-            continue
-        item_name = hdr.get_text(strip=True)
-        t = c.get_text(" ", strip=True)
-        m = re.search(r"([A-Za-z0-9\.\'’\- ]+)\s\+\s([A-Za-z0-9\.\'’\- ]+)", t)
-        if m:
-            a = m.group(1).strip()
-            b = m.group(2).strip()
-            mapping[item_name] = [a, b]
     return mapping
 
 
@@ -96,7 +102,7 @@ def merge_to_nameId(cdragon_by_display, recipes_by_display):
         if not key:
             missed.append(disp)
             continue
-        out[key] = {"components": comps, "components_ids": []}
+        out[key] = {"components": comps}
     return out, missed
 
 
@@ -124,14 +130,6 @@ def main():
         merged_display.update(moba)
     except Exception as e:
         print("[gen_item_components] Mobalytics scrape failed:", e)
-
-    try:
-        blitz = parse_blitz()
-        print(f"[gen_item_components] Blitz parsed: {len(blitz)} items")
-        for k, v in blitz.items():
-            merged_display.setdefault(k, v)
-    except Exception as e:
-        print("[gen_item_components] Blitz scrape failed:", e)
 
     nameId_map, misses = merge_to_nameId(cdragon_by_display, merged_display)
     if misses:

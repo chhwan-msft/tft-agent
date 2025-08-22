@@ -77,7 +77,6 @@ def item_to_doc(i: dict):
         "desc": i.get("desc", ""),
         "effects_text": i.get("effects_text", ""),
         "components": comps,
-        "components_ids": i.get("components_ids", []),
         "url": i.get("source_url"),
         "content": content,
     }
