@@ -62,6 +62,24 @@ Fetch data, normalize it, upload JSONL files to blob storage, create indexes/ski
 python -m src.main
 ```
 
+### CLI flags
+
+You can run individual steps or all steps using flags on the main script. Examples:
+
+```
+# Run everything
+python -m src.tft-ingest.main --all
+
+# Fetch only
+python -m src.tft-ingest.main --fetch
+
+# Upload (will fetch first if needed)
+python -m src.tft-ingest.main --upload
+
+# Create indexes only
+python -m src.tft-ingest.main --create-indexes
+```
+
 What this does:
 
 - Uploads `units.jsonl`, `items.jsonl`, `traits.jsonl` to their respective blob containers

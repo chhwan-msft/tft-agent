@@ -9,8 +9,10 @@ attrs==25.3.0
 av==14.4.0
 azure-ai-agents==1.2.0b2
 azure-ai-projects==1.1.0b2
+azure-common==1.1.28
 azure-core==1.35.0
 azure-identity==1.24.0
+azure-search-documents==11.6.0b12
 azure-storage-blob==12.26.0
 beautifulsoup4==4.13.4
 certifi==2025.8.3
@@ -42,6 +44,7 @@ jsonschema==4.25.0
 jsonschema-path==0.3.4
 jsonschema-specifications==2025.4.1
 lazy-object-proxy==1.11.0
+lxml==6.0.0
 markupsafe==3.0.2
 more-itertools==10.7.0
 msal==1.33.0

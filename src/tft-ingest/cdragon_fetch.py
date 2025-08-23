@@ -4,10 +4,30 @@ import json
 import requests
 from tenacity import retry, stop_after_attempt, wait_fixed
 
-UNITS_URL = os.getenv("CDRAGON_UNITS_URL")
-ITEMS_URL = os.getenv("CDRAGON_ITEMS_URL")
-TRAITS_URL = os.getenv("CDRAGON_TRAITS_URL")
-SET_KEY = os.getenv("SET_KEY", "TFTSet15")
+
+# Defer reading environment variables until runtime to avoid import-time KeyErrors.
+def _get_env(name: str, default=None, required: bool = False):
+    val = os.getenv(name, default)
+    if required and (val is None or val == ""):
+        raise RuntimeError(f"Environment variable {name} is required but not set.")
+    return val
+
+
+def _get_units_url():
+    return _get_env("CDRAGON_UNITS_URL", required=True)
+
+
+def _get_items_url():
+    return _get_env("CDRAGON_ITEMS_URL", required=True)
+
+
+def _get_traits_url():
+    return _get_env("CDRAGON_TRAITS_URL", required=True)
+
+
+def _get_set_key():
+    return _get_env("SET_KEY", "TFTSet15")
+
 
 HEADERS = {"User-Agent": "tft-poc/1.0 (+azure-ai-foundry)"}
 
@@ -28,16 +48,17 @@ def _effects_to_text(effects):
 
 
 def fetch_units():
-    data = get_json(UNITS_URL)
-    if SET_KEY not in data:
+    units_url = _get_units_url()
+    data = get_json(units_url)
+    if _get_set_key() not in data:
         set_keys = sorted([k for k in data.keys() if k.startswith("TFTSet")])
         if not set_keys:
             raise RuntimeError("No TFTSet keys in team-planner JSON.")
         set_key = set_keys[-1]
     else:
-        set_key = SET_KEY
+        set_key = _get_set_key()
 
-    out = []
+    units = []
     for e in data[set_key]:
         # Keep your sample fields; 'tier' may be 'cost' in some exports—copy over if missing
         unit = {
@@ -46,14 +67,16 @@ def fetch_units():
             "tier": e.get("tier") or e.get("cost"),
             "traits": e.get("traits", []),  # expect array of {name,id,amount}
             "set_id": set_key,
-            "source_url": UNITS_URL,
+            "source_url": units_url,
         }
-        out.append(unit)
-    return out
+        units.append(unit)
+
+    return units
 
 
 def fetch_traits():
-    data = get_json(TRAITS_URL)
+    traits_url = _get_traits_url()
+    data = get_json(traits_url)
     traits = []
     # CDragon tfttraits.json can be list or dict; normalize accordingly
     if isinstance(data, dict):
@@ -65,13 +88,14 @@ def fetch_traits():
         traits.append(
             {
                 "display_name": e.get("name") or e.get("display_name"),
-                "trait_id": e.get("id") or e.get("apiName"),
+                "trait_id": e.get("trait_id") or e.get("apiName"),
                 "set": e.get("set") or "TFTSet15",
-                "tooltip_text": e.get("desc") or e.get("description", ""),
+                "tooltip_text": e.get("tooltip_text") or e.get("description", ""),
                 "conditional_trait_sets": e.get("levels") or e.get("conditional_trait_sets") or [],
-                "source_url": TRAITS_URL,
+                "source_url": traits_url,
             }
         )
+
     return traits
 
 
@@ -89,7 +113,8 @@ def _load_item_components_map():
 
 
 def fetch_items():
-    data = get_json(ITEMS_URL)
+    items_url = _get_items_url()
+    data = get_json(items_url)
     comp_map = _load_item_components_map()
     items = []
     iterable = data.get("items") if isinstance(data, dict) else data
@@ -97,18 +122,16 @@ def fetch_items():
     for e in iterable or []:
         nameId = e.get("id") or e.get("apiName") or e.get("nameId")
         name = e.get("name") or e.get("display_name") or nameId
-        desc = e.get("desc") or e.get("description") or ""
-        effects_text = _effects_to_text(e.get("effects"))
 
         rec = {
             "nameId": nameId,
             "name": name,
-            "desc": desc,
-            "effects_text": effects_text,
             "set_id": "TFTSet15",
-            "source_url": ITEMS_URL,
+            "source_url": items_url,
         }
 
         if nameId in comp_map:
             rec["components"] = comp_map[nameId].get("components", [])
         items.append(rec)
+
+    return items

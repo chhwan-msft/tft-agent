@@ -51,7 +51,6 @@ def trait_to_doc(t: dict):
         "entity_type": "trait",
         "set_id": t.get("set", "TFTSet15"),
         "name": t.get("display_name"),
-        "desc": t.get("tooltip_text", ""),
         "breakpoints_json": json.dumps(bps, ensure_ascii=False),
         "min_units": mins,
         "url": t.get("source_url"),
@@ -65,17 +64,11 @@ def item_to_doc(i: dict):
     content = f"{i.get('name')} (Item)."
     if comps:
         content += f" Components: {comps_str}."
-    if i.get("desc"):
-        content += f" {i['desc']}"
-    if i.get("effects_text"):
-        content += f" Effects: {i['effects_text']}."
     return {
         "id": i.get("nameId") or i.get("id"),
         "entity_type": "item",
         "set_id": i.get("set_id", "TFTSet15"),
         "name": i.get("name"),
-        "desc": i.get("desc", ""),
-        "effects_text": i.get("effects_text", ""),
         "components": comps,
         "url": i.get("source_url"),
         "content": content,
