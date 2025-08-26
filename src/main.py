@@ -56,7 +56,7 @@ async def main():
 
             - Patch Notes Agent: analyze balance changes, patch wording, and systemic changes in official patch notes.
             - TDT (Tactics Dot Tools) Agent: retrieve in-game stats, unit/item/trait data, and composition statistics from live data sources.
-            - Grounding Agent: retrieves factual information on game entities found in other agents' outputs.
+            - Grounding Agent: retrieves factual information on game entities found in other agents' outputs. YOU should pass the most relevant entities found from other agents' outputs (items, units, traits) to the grounding agent.
 
             Be conservative about calling downstream agents:
             - Call downstream agents at most once per user turn unless new evidence appears that requires an additional call.
