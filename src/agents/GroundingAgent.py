@@ -20,7 +20,7 @@ system_prompt = """
 You are an expert in extracting units, items, and traits from other LLM outputs to retrieve factual information from indexes. Your context is set 15 in TFT (teamfight tactics).
 Your job is to:
 
-- Extract any units, items, or traits from initial query (which will be another agent's output).
+- Extract any units, items, or traits from initial query (the query will be another agent's output).
 - Call `ground_facts` and pass a JSON payload with those keys and lists (for example: {"units": ["Yasuo","Garen"], "items": ["Infinity Edge"]}).
 - The `ground_facts` tool will return factual context for each named entity; return these facts in structured format for the main agent to be able to process easily.
 
@@ -111,9 +111,7 @@ class GroundingAgent:
                     print(f"Processing tool call: {tool_call.function.name}")
                     if tool_call.function.name == "ground_facts":
                         model_args = json.loads(tool_call.function.arguments or "{}")
-                        print(model_args)
-                        query = model_args.get("query", "N/A")
-                        output = await self.ground_facts(query)
+                        output = await self.ground_facts(model_args)
                         tool_outputs.append({"tool_call_id": tool_call.id, "output": output})
 
                 project_client.agents.runs.submit_tool_outputs(
