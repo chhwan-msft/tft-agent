@@ -1,15 +1,16 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+import json
 import os
 import time
-import json
 
-from azure.ai.agents.models import MessageRole, AsyncFunctionTool
+from azure.ai.agents.models import AsyncFunctionTool, MessageRole
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
-from utils.dotenv_loader import load_nearest_dotenv
 from semantic_kernel.functions import kernel_function
+
+from utils.dotenv_loader import load_nearest_dotenv
 from utils.rag_tool import ground_text_and_add_to_history
 
 # Load nearest .env (do not override existing process envs by default)
@@ -70,18 +71,18 @@ class GroundingAgent:
 
         # Add tools (`ground_facts`)
         async_functions = AsyncFunctionTool({self.ground_facts})
-        tools_defs = async_functions.definitions
+        _ = async_functions.definitions
 
         # Get existing agent from Foundry project
-        # a = project_client.agents.get_agent(os.environ["GROUNDING_AGENT_ID"])
+        grounding_agent = project_client.agents.get_agent(os.environ["GROUNDING_AGENT_ID"])
 
         # # Create or get an agent in the Foundry project
-        grounding_agent = project_client.agents.create_agent(
-            model="gpt-4o",
-            name="grounding-agent",
-            instructions=system_prompt,  # System prompt for the agent
-            tools=tools_defs,
-        )
+        # grounding_agent = project_client.agents.create_agent(
+        #     model="gpt-4o",
+        #     name="grounding-agent",
+        #     instructions=system_prompt,  # System prompt for the agent
+        #     tools=tools_defs,
+        # )
 
         # Create a thread which is a conversation session between an agent and a user.
         thread = project_client.agents.threads.create()

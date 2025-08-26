@@ -6,15 +6,12 @@ import requests
 import time
 
 from bs4 import BeautifulSoup
-from azure.ai.agents.models import MessageRole, AsyncFunctionTool
+from azure.ai.agents.models import AsyncFunctionTool, MessageRole
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
-from utils.dotenv_loader import load_nearest_dotenv
 from semantic_kernel.functions import kernel_function
-from utils.rag_tool import ground_text_and_add_to_history
 
-# Load nearest .env (do not override existing process envs by default)
-load_nearest_dotenv(start_path=__file__, override=False)
+from utils.rag_tool import ground_text_and_add_to_history
 
 system_prompt = """
 You are an expert in parsing and analyzing Teamfight Tactics patch notes. Your job is to:

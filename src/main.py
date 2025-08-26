@@ -1,17 +1,17 @@
 import asyncio
 import os
 
-from utils.dotenv_loader import load_nearest_dotenv
+from azure.core.credentials import AzureKeyCredential
 from semantic_kernel.agents import ChatCompletionAgent
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
-from semantic_kernel.contents.chat_message_content import ChatMessageContent
-from semantic_kernel.contents.chat_history import ChatHistory
 from semantic_kernel.connectors.ai.function_choice_behavior import FunctionChoiceBehavior
+from semantic_kernel.contents.chat_history import ChatHistory
+from semantic_kernel.contents.chat_message_content import ChatMessageContent
 from semantic_kernel.contents.utils.author_role import AuthorRole
 from semantic_kernel.kernel import Kernel
-from azure.core.credentials import AzureKeyCredential
+from utils.dotenv_loader import load_nearest_dotenv
 
-from agents import PatchNotesAgent, TDTAgent, GroundingAgent
+from agents import GroundingAgent, PatchNotesAgent, TDTAgent
 
 # Load environment variables
 load_nearest_dotenv(start_path=__file__, override=False)

@@ -1,16 +1,17 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
-import os
-import requests
-import time
 import json
+import os
+import time
 
-from azure.ai.agents.models import MessageRole, FunctionTool
+import requests
+from azure.ai.agents.models import FunctionTool, MessageRole
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
-from utils.dotenv_loader import load_nearest_dotenv
 from semantic_kernel.functions import kernel_function
+
+from utils.dotenv_loader import load_nearest_dotenv
 
 # Load nearest .env (do not override existing process envs by default)
 load_nearest_dotenv(start_path=__file__, override=False)
