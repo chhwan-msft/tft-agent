@@ -6,24 +6,30 @@ import requests
 import time
 
 from bs4 import BeautifulSoup
-from azure.ai.agents.models import MessageRole
+from azure.ai.agents.models import MessageRole, AsyncFunctionTool
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
-from dotenv import load_dotenv
+from utils.dotenv_loader import load_nearest_dotenv
 from semantic_kernel.functions import kernel_function
+from utils.rag_tool import ground_text_and_add_to_history
 
-load_dotenv()
+# Load nearest .env (do not override existing process envs by default)
+load_nearest_dotenv(start_path=__file__, override=False)
 
 system_prompt = """
-You are an expert in parsing and analyzing Teamfight Tactics patch notes. Your job is to: >
+You are an expert in parsing and analyzing Teamfight Tactics patch notes. Your job is to:
 
 - Extract and summarize buffs, nerfs, reworks, and system changes.
 - Highlight the most impactful changes.
-- Identify potential meta shifts based on balance adjustments. >
+- Identify potential meta shifts based on balance adjustments.
 
-Your output should be structured, concise, and focused on competitive implications. When possible, group changes by unit, trait, or item.
-This will be passed to another agent that predicts meta shifts and strong team comps, so keep the formatting clean and consistent.
-You should always call your get_patch_notes tool and only analyze the patch notes returned from this tool."""
+Guidelines and available tools:
+
+- get_patch_notes: MUST be called first to obtain the authoritative, full-text patch notes for the latest patch. Only analyze patch notes returned by this tool; do not fetch or assume additional patch content from other sources.
+
+- Always call `get_patch_notes` before producing any analysis.
+- Keep outputs concise, structured, and focused on competitive implications.
+"""
 
 user_prompt = "The following is the user's query. If you can't figure it out, respond with 'I don't know' instead of trying to guess or taking too long. "
 
@@ -33,10 +39,55 @@ class PatchNotesAgent:
     A class to represent the Patch Notes Agent.
     """
 
+    # class-level cache shared across instances in this process
+    _cached_patch_notes: str | None = None
+
+    @classmethod
+    def get_patch_notes(cls):
+        """Fetch patch notes once per process and cache result for the session."""
+        # Return cached copy if present
+        if cls._cached_patch_notes:
+            print("[PatchNotesAgent] Returning cached patch notes")
+            return cls._cached_patch_notes
+
+        base_url = "https://www.leagueoflegends.com"
+        tag_url = f"{base_url}/en-us/news/tags/teamfight-tactics-patch-notes/"
+
+        # Fetch the tag page
+        response = requests.get(tag_url)
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Find the first article link
+        first_link_tag = soup.select_one('a[data-testid="articlefeaturedcard-component"]')
+        if not first_link_tag:
+            cls._cached_patch_notes = "No article link found."
+            return cls._cached_patch_notes
+
+        article_url = first_link_tag["href"]
+
+        # Fetch the article content
+        article_response = requests.get(article_url)
+        article_soup = BeautifulSoup(article_response.text, "html.parser")
+
+        # Extract main content
+        patch_notes_div = article_soup.find("div", id="patch-notes-container")
+        if patch_notes_div:
+            notes = patch_notes_div.get_text(separator="\n", strip=True)
+            cls._cached_patch_notes = notes
+            return notes
+        else:
+            cls._cached_patch_notes = "Patch notes not found."
+            return cls._cached_patch_notes
+
+    @staticmethod
+    async def ground_facts(query):
+        print(f"Received query from PatchNotesAgent to ground: {query}")
+        return (await ground_text_and_add_to_history(query))[1] or ""
+
     @kernel_function(
         description="An agent that pulls latest patch notes and makes predictions based on balance changes."
     )
-    def process_patch_notes(self, query: str) -> str:
+    async def process_patch_notes(self, query: str) -> str:
         """
         Creates an Azure AI Agent that pulls latest patch notes and makes predictions based on balance changes.
 
@@ -49,43 +100,19 @@ class PatchNotesAgent:
         # Connecting to our Azure AI Foundry project, which will allow us to use the deployed gpt-4o model for our agent
         project_client = AIProjectClient(os.environ["AIPROJECT_ENDPOINT"], DefaultAzureCredential())
 
-        # Add tools
-        def get_patch_notes():
-            base_url = "https://www.leagueoflegends.com"
-            tag_url = f"{base_url}/en-us/news/tags/teamfight-tactics-patch-notes/"
-
-            # Fetch the tag page
-            response = requests.get(tag_url)
-            soup = BeautifulSoup(response.text, "html.parser")
-
-            # Find the first article link
-            first_link_tag = soup.select_one('a[data-testid="articlefeaturedcard-component"]')
-            if not first_link_tag:
-                return "No article link found."
-
-            article_url = first_link_tag["href"]
-
-            # Fetch the article content
-            article_response = requests.get(article_url)
-            article_soup = BeautifulSoup(article_response.text, "html.parser")
-
-            # Extract main content
-            patch_notes_div = article_soup.find("div", id="patch-notes-container")
-            if patch_notes_div:
-                notes = patch_notes_div.get_text(separator="\n", strip=True)
-                return notes
-            else:
-                return "Patch notes not found."
-
-        # functions = FunctionTool({get_patch_notes})
+        # Add tools (agent methods `get_patch_notes` and `ground_facts`)
+        functions = AsyncFunctionTool({self.get_patch_notes})
+        _ = functions.definitions
 
         # Get existing agent from Foundry project
         patch_notes_agent = project_client.agents.get_agent(os.environ["PATCH_NOTES_RESEARCHER_AGENT_ID"])
+
+        # # Create or get an agent in the Foundry project
         # patch_notes_agent = project_client.agents.create_agent(
         #     model="gpt-4o",
         #     name="patch-notes-agent",
-        #     instructions=system_prompt, # System prompt for the agent
-        #     tools=functions.definitions
+        #     instructions=system_prompt,  # System prompt for the agent
+        #     tools=tools_defs,
         # )
 
         # Create a thread which is a conversation session between an agent and a user.
@@ -97,6 +124,7 @@ class PatchNotesAgent:
             role="user",
             content=f"{user_prompt}{query}",  # The user's message
         )
+
         # Run the agent to process the message in the thread
         run = project_client.agents.runs.create(thread_id=thread.id, agent_id=patch_notes_agent.id)
 
@@ -111,9 +139,11 @@ class PatchNotesAgent:
                 tool_calls = run.required_action.submit_tool_outputs.tool_calls
                 tool_outputs = []
                 for tool_call in tool_calls:
+                    print(f"Processing tool call: {tool_call.function.name}")
                     if tool_call.function.name == "get_patch_notes":
-                        output = get_patch_notes()
+                        output = self.get_patch_notes()
                         tool_outputs.append({"tool_call_id": tool_call.id, "output": output})
+
                 project_client.agents.runs.submit_tool_outputs(
                     thread_id=thread.id, run_id=run.id, tool_outputs=tool_outputs
                 )
@@ -122,7 +152,7 @@ class PatchNotesAgent:
         if run.status == "failed":
             print(f"Run failed: {run.last_error}")
 
-        # Delete the agent when it's done running
+        # Delete the agent when it's done running (optional)
         # project_client.agents.delete_agent(patch_notes_agent.id)
 
         # Get the last message from the thread
@@ -131,5 +161,4 @@ class PatchNotesAgent:
         )
 
         print("Patch notes agent completed successfully!")
-
         return str(last_msg)

@@ -6,66 +6,37 @@ import requests
 import time
 import json
 
-from azure.ai.agents.models import MessageRole
+from azure.ai.agents.models import MessageRole, FunctionTool
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
-from dotenv import load_dotenv
+from utils.dotenv_loader import load_nearest_dotenv
 from semantic_kernel.functions import kernel_function
 
-load_dotenv()
+# Load nearest .env (do not override existing process envs by default)
+load_nearest_dotenv(start_path=__file__, override=False)
 
 system_prompt = """
-You are an intelligent agent in a multiagent system designed for Teamfight Tactics (TFT). You have access to two specialized tools:
+You are an intelligent agent in a multiagent system designed for Teamfight Tactics (TFT).
 
-get_general_stats: Retrieves general statistics about TFT units, items, and traits.
-get_comp_stats: Retrieves statistics about high-performing TFT team compositions.
+Tool availability:
+- get_general_stats: AVAILABLE — retrieves general statistics about TFT units, items, and traits.
+- get_comp_stats: DISABLED — do not call or rely on this tool (it is not functional right now).
 
-When you receive a query from the orchestration agent, your responsibilities are to:
+When you receive a query from the orchestration agent, determine whether the available tools are sufficient.
 
-Analyze the query intent to determine what kind of statistical data is needed.
-Select the appropriate tool(s) to fulfill the query:
+Examples:
+- Use get_general_stats only: "What are Lux's current cost and typical build components?"
+- Do NOT call get_comp_stats: any request asking for team composition aggregator stats should be answered by either using get_general_stats (if possible) or by saying you don't have comp-level data and offering to fetch or enable it later.
+- Use neither: questions about lore, cosmetics, or developer intent should not call tools (e.g., "What's Lux's backstory?").
 
-Use get_general_stats only
-Use get_comp_stats only
-Use both tools
-Use neither tool if the query does not require gameplay statistics
+Guidelines:
+- Only call get_general_stats when the question requires factual unit/item/trait stats.
+- Never call get_comp_stats — it is disabled by policy for this deployment.
+- If a question requires comp-level analysis (win rates, meta comps) that you cannot derive from get_general_stats, say you don't have the required data and offer to fetch it once the comp tool is available.
 
-
-Return a clean, summarized response that directly addresses the query and is easy for the orchestration agent to parse and route.
-
-Tool Selection Guidelines:
-
-Use get_general_stats if the query involves:
-
-Specific champions, items, or traits
-Questions about individual unit strength, item effectiveness, or trait synergies
-General meta information or patch-specific changes
-
-
-Use get_comp_stats if the query involves:
-
-Optimal team compositions or meta builds
-Win rates, top 4 rates, or performance metrics of team comps
-Strategy recommendations based on ranked performance
-
-
-Use both tools if the query requires:
-
-A comprehensive analysis combining unit/item/trait data with team comp performance
-Evaluations of how specific units or traits contribute to top-performing comps
-Meta evolution or synergy effectiveness across multiple dimensions
-
-
-Use neither tool if the query is:
-
-Focused on lore, cosmetics, UI, or non-performance aspects of TFT
-Speculative or philosophical in nature (e.g., game design theory)
-
-
-Response Requirements:
-
-Keep the output concise, relevant, and structured.
-Your response should be data-rich, accurate, and formatted for easy interpretation by the main agent.
+Response requirements:
+- Keep answers concise, data-driven, and clearly cite the source (e.g., "data from get_general_stats").
+- Do not guess or invent statistics; if data is missing or ambiguous, explicitly state that and avoid asserting unverified facts.
 """
 
 user_prompt = "Never call the tool get_comp_stats, it is not ready for use yet. The following is the user's query: "
@@ -76,10 +47,30 @@ class TDTAgent:
     A class to represent the Tactis Dot Tools Agent.
     """
 
+    # class-level cache shared across instances in this process
+    _cached_general_stats: str | None = None
+
+    @classmethod
+    def get_general_stats(cls):
+        """Fetch general stats once per session and cache the JSON string."""
+        if cls._cached_general_stats:
+            print("[TDTAgent] Returning cached general stats")
+            return cls._cached_general_stats
+        url = "https://d3.tft.tools/stats2/general/1100/15151/1"
+        response = requests.get(url)
+        cls._cached_general_stats = json.dumps(response.json())
+        return cls._cached_general_stats
+
+    @staticmethod
+    def get_comp_stats():
+        # This tool is intentionally disabled at the host level. Return a safe placeholder.
+        print("[TDTAgent] get_comp_stats requested but disabled by host")
+        return json.dumps({"error": "get_comp_stats is disabled by host"})
+
     @kernel_function(
         description="An agent that pulls latest patch notes and makes predictions based on balance changes."
     )
-    def process_patch_notes(self, query: str) -> str:
+    async def process_patch_notes(self, query: str) -> str:
         """
         Creates an Azure AI Agent that pulls stats from tactics.tools.
 
@@ -92,27 +83,19 @@ class TDTAgent:
         # Connecting to our Azure AI Foundry project, which will allow us to use the deployed gpt-4o model for our agent
         project_client = AIProjectClient(os.environ["AIPROJECT_ENDPOINT"], DefaultAzureCredential())
 
-        # General stats on units, items, traits
-        def get_general_stats():
-            url = "https://d3.tft.tools/stats2/general/1100/15151/1"
-            response = requests.get(url)
-            return json.dumps(response.json())
-
-        # Stats on high performing comps
-        def get_comp_stats():
-            url = "https://api.tft.tools/team-compositions/1/15151"
-            response = requests.get(url)
-            return json.dumps(response.json())
-
-        # functions = FunctionTool({get_general_stats, get_comp_stats})
+        # Register agent tools using bound methods
+        # Register sync tools with FunctionTool and async tools with AsyncFunctionTool
+        functions = FunctionTool({self.get_general_stats, self.get_comp_stats})
+        _ = functions.definitions
 
         # Get existing agent from Foundry project
         tdt_agent = project_client.agents.get_agent(os.environ["TACTICS_DOT_TOOLS_AGENT_ID"])
+
         # tdt_agent = project_client.agents.create_agent(
         #     model="gpt-4o",
         #     name="tdt-agent",
         #     instructions=system_prompt, # System prompt for the agent
-        #     tools=functions.definitions
+        #     tools=tools_defs
         # )
 
         # Create a thread which is a conversation session between an agent and a user.
@@ -140,10 +123,11 @@ class TDTAgent:
                 for tool_call in tool_calls:
                     print(f"Processing tool call: {tool_call.function.name}")
                     if tool_call.function.name == "get_general_stats":
-                        output = get_general_stats()
+                        output = self.get_general_stats()
                         tool_outputs.append({"tool_call_id": tool_call.id, "output": output})
                     elif tool_call.function.name == "get_comp_stats":
-                        output = get_comp_stats()
+                        # Do not execute the real get_comp_stats; return a disabled placeholder.
+                        output = self.get_comp_stats()
                         tool_outputs.append({"tool_call_id": tool_call.id, "output": output})
                 project_client.agents.runs.submit_tool_outputs(
                     thread_id=thread.id, run_id=run.id, tool_outputs=tool_outputs
@@ -162,5 +146,4 @@ class TDTAgent:
         )
 
         print("TDT agent completed successfully!")
-
         return str(last_msg)

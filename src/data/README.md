@@ -68,16 +68,16 @@ You can run individual steps or all steps using flags on the main script. Exampl
 
 ```
 # Run everything
-python -m src.tft-ingest.main --all
+python -m src.tft_data.main --all
 
 # Fetch only
-python -m src.tft-ingest.main --fetch
+python -m src.tft_data.main --fetch
 
 # Upload (will fetch first if needed)
-python -m src.tft-ingest.main --upload
+python -m src.tft_data.main --upload
 
 # Create indexes only
-python -m src.tft-ingest.main --create-indexes
+python -m src.tft_data.main --create-indexes
 ```
 
 What this does:

@@ -3,6 +3,10 @@ import json
 import io
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
+from utils.dotenv_loader import load_nearest_dotenv
+
+# Load environment variables
+load_nearest_dotenv(start_path=__file__, override=False)
 
 
 def ensure_container(client, name: str):

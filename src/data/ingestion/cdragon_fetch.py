@@ -4,6 +4,11 @@ import json
 import requests
 from tenacity import retry, stop_after_attempt, wait_fixed
 
+from utils.dotenv_loader import load_nearest_dotenv
+
+# Load environment variables
+load_nearest_dotenv(start_path=__file__, override=False)
+
 
 # Defer reading environment variables until runtime to avoid import-time KeyErrors.
 def _get_env(name: str, default=None, required: bool = False):

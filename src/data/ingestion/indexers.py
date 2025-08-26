@@ -18,6 +18,11 @@ from azure.search.documents.indexes.models import (
     SplitSkill,
 )
 
+from utils.dotenv_loader import load_nearest_dotenv
+
+# Load environment variables
+load_nearest_dotenv(start_path=__file__, override=False)
+
 VECTOR_FIELD = "contentVector"  # 1024 dims for Cohere v3 English
 
 

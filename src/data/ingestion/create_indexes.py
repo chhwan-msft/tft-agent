@@ -19,6 +19,11 @@ from azure.search.documents.indexes.models import (
     VectorSearchProfile,
 )
 
+from utils.dotenv_loader import load_nearest_dotenv
+
+# Load environment variables
+load_nearest_dotenv(start_path=__file__, override=False)
+
 API = os.getenv("AZURE_SEARCH_API_VERSION", "2024-05-01-Preview")
 VECTOR_SEARCH_PROFILE_NAME = "aml-profile"
 

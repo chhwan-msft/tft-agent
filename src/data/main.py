@@ -1,29 +1,22 @@
 import argparse
 import os
-from pathlib import Path
 
-from dotenv import find_dotenv, load_dotenv
+from utils.dotenv_loader import load_nearest_dotenv
 
 from azure.search.documents.indexes.models import FieldMapping, InputFieldMappingEntry
-from blob_upload import upload_jsonl
-from build_docs import item_to_doc, trait_to_doc, unit_to_doc
-from cdragon_fetch import fetch_items, fetch_traits, fetch_units
-from create_indexes import create_items_index, create_traits_index, create_units_index
-from indexers import create_blob_datasource, create_embedding_skillset, create_indexer, run_indexer
+from ingestion.blob_upload import upload_jsonl
+from ingestion.build_docs import item_to_doc, trait_to_doc, unit_to_doc
+from ingestion.cdragon_fetch import fetch_items, fetch_traits, fetch_units
+from ingestion.create_indexes import create_items_index, create_traits_index, create_units_index
+from ingestion.indexers import create_blob_datasource, create_embedding_skillset, create_indexer, run_indexer
 
 
 def _load_dotenv():
-    env_path = Path(__file__).resolve().parent / ".env"
-    if env_path.exists():
-        load_dotenv(dotenv_path=env_path, override=True)
-        print(f"Loaded .env from {env_path}")
+    loaded = load_nearest_dotenv(start_path=__file__, override=False)
+    if loaded:
+        print(f"Loaded .env from {loaded}")
     else:
-        found = find_dotenv()
-        if found:
-            load_dotenv(dotenv_path=found, override=False)
-            print(f"Loaded .env from {found}")
-        else:
-            print("No .env file found; relying on environment variables")
+        print("No .env file found; relying on environment variables")
 
 
 def main():

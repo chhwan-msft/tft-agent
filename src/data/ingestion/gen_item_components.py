@@ -4,6 +4,11 @@ import re
 import requests
 from bs4 import BeautifulSoup
 
+from utils.dotenv_loader import load_nearest_dotenv
+
+# Load environment variables
+load_nearest_dotenv(start_path=__file__, override=False)
+
 CDRAGON_ITEMS_URL = os.getenv(
     "CDRAGON_ITEMS_URL",
     "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/tftitems.json",
