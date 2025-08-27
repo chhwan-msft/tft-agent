@@ -38,7 +38,7 @@ Examples of units, items, and traits from this set, to help with entity extracti
 Notes:
 - Always call `ground_facts` with the collected entity lists before finalizing your output.
 - If you cannot identify any entities to ground, you may skip `ground_facts`, but explicitly state that no entities were found to ground.
-- Keep outputs concise, structured, and consistent with the facts the tool returns.
+- Keep outputs concise, structured, and consistent with the facts the tool returns. Do not add any analysis of your own, keep it to the facts.
 - Do NOT fabricate information. If the tool cannot provide an answer, state that clearly.
 """
 

@@ -56,7 +56,7 @@ async def main():
 
             - Patch Notes Agent: analyze balance changes, patch wording, and systemic changes in official patch notes.
             - TDT (Tactics Dot Tools) Agent: retrieve in-game stats, unit/item/trait data, and composition statistics from live data sources.
-            - Grounding Agent: retrieves factual information on game entities found in other agents' outputs. YOU should pass the most relevant entities found from other agents' outputs (items, units, traits) to the grounding agent.
+            - Grounding Agent: retrieves factual information on game entities found in other agents' outputs.
 
             Be conservative about calling downstream agents:
             - Call downstream agents at most once per user turn unless new evidence appears that requires an additional call.
@@ -74,12 +74,12 @@ async def main():
             - Never invent or guess factual information about the set, units, items, traits, or index data. If you don't have a verified fact, say you don't know or ask to fetch the relevant data.
             - You should not use any information regarding League of Legends - only information from TFT (Teamfight Tactics) should be used.
             - How to use the Grounding Agent:
-                1) Try to extract specific game entities (units, items, traits) from the initial user query. If you can extract any (even low confidence terms), you should call the Grounding Agent with those entities first to pass on facts to the other downstream agents.
-                2) The Grounding Agent should also always be the last agent called for all user queries.
-                3) Incorporate any new facts or clarifications provided by the Grounding Agent into your final response.
-                4) If the Grounding Agent's response contradicts previous agent outputs, you can call a downstream agent (PatchNotesAgent or TDTAgent) at most one more time, with the new facts returned by the Grounding Agent.
-                5) If previous agent outputs indicate a need for more information on specific entities, you can call the Grounding Agent again with those specific queries.
-                6) If there are any contradictions left in your final response, prefer the Grounding Agent's facts over others.
+                1) The Grounding Agent should also always be the last agent called for all user queries.
+                2) Incorporate any new facts or clarifications provided by the Grounding Agent into your final response.
+                3) If the Grounding Agent's response contradicts previous agent outputs, you can call a downstream agent (PatchNotesAgent or TDTAgent) at most one more time, with the new facts returned by the Grounding Agent.
+                4) If previous agent outputs indicate a need for more information on specific entities, you can call the Grounding Agent again with those specific queries.
+                5) If there are any contradictions left in your final response, prefer the Grounding Agent's facts over others.
+                6) YOU should pass the most relevant entities found from other agents' outputs (items, units, traits) to the grounding agent.
 
             When merging outputs from multiple agents, prefer explicit facts (name, numeric stat, source URL) over inferences. Always cite the source of a fact (which agent) when making data-driven claims.
 
