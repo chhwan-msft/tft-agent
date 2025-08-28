@@ -1,14 +1,15 @@
-name: Pulumi Preview Staging
+name: Pulumi Deploy Staging
 
-on: pull_request
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   # Determine which tenants were modified
   get-changed-tenants:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
     outputs:
       tenants: ${{ steps.filter.outputs.changes }}
     steps:
@@ -16,16 +17,15 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
-          filters: .github/filters.yml
+          filters: .github/tenant-filters.yml
 
-  preview:
+  deploy:
     runs-on: ubuntu-latest
     needs: get-changed-tenants
 
     permissions:
       contents: read
       id-token: write
-      pull-requests: write
 
     # Run this job for each modified tenant
     strategy:
@@ -35,6 +35,12 @@ jobs:
         tenant: ${{ fromJson(needs.get-changed-tenants.outputs.tenants) }}
 
     environment: ${{ matrix.tenant }}-staging
+
+    # Don't allow concurrent deploys
+    concurrency:
+      group: ${{ matrix.tenant }}-staging-deploy
+      # Deployments will be queued
+      cancel-in-progress: false
 
     steps:
       - name: Checkout
@@ -57,7 +63,7 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Preview changes
+      - name: Deploy changes
         uses: pulumi/actions@v6
         env:
           ARM_USE_OIDC: true
@@ -67,60 +73,7 @@ jobs:
           AZURE_STORAGE_ACCOUNT: ${{ secrets.PULUMI_AZURE_STORAGE_ACCOUNT }}
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_ENCRYPTION_KEY }}
         with:
-          command: preview
+          command: up
           work-dir: infra/${{ matrix.tenant }}
           stack-name: staging
           cloud-url: azblob://${{ secrets.PULUMI_AZURE_CONTAINER }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          comment-on-pr: true
-          upsert: true
-
-  # Accessing environment-level secrets creates a "deployment" artifact
-  # on GitHub, even if there wasn't an actual deployment. But we need
-  # to access these secrets in order to get the Pulumi plan, so in order
-  # to avoid noise about deployments happening in the repository, we manually
-  # delete the deployments associated with the pull request at the end of
-  # each run of this workflow.
-  #
-  # See https://github.com/orgs/community/discussions/36919 for more details.
-  delete-deployments:
-    runs-on: ubuntu-latest
-    needs: preview
-    permissions:
-      deployments: write
-    steps:
-      - name: Delete misleading "deployments"
-        if: always()
-        uses: actions/github-script@v7
-        env:
-          PULL_REQUEST_HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          DEFAULT_BRANCH_NAME: ${{ github.event.repository.default_branch }}
-        with:
-          script: |
-            const { PULL_REQUEST_HEAD_REF, DEFAULT_BRANCH_NAME } = process.env;
-            // Don't think this is possible, but double check anyway
-            if (PULL_REQUEST_HEAD_REF === DEFAULT_BRANCH_NAME)
-            {
-              throw new Error(`Can't delete deployments for the '${DEFAULT_BRANCH_NAME}' branch.`);
-            }
-            const deployments = await github.rest.repos.listDeployments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: PULL_REQUEST_HEAD_REF,
-            });
-            console.log(`Deleting ${deployments.data.length} deployments for ref '${PULL_REQUEST_HEAD_REF}'.`);
-            await Promise.all(
-              deployments.data.map(async (deployment) => {
-                await github.rest.repos.createDeploymentStatus({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  deployment_id: deployment.id,
-                  state: 'inactive',
-                });
-                await github.rest.repos.deleteDeployment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  deployment_id: deployment.id,
-                });
-              })
-            );
