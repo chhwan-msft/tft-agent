@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   # Determine which tenants were modified
@@ -17,7 +17,7 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
-          filters: .github/tenant-filters.yml
+          filters: .github/filters.yml
 
   deploy:
     runs-on: ubuntu-latest
