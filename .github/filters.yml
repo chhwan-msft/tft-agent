@@ -1,0 +1,5 @@
+# This file is used in the dorny/paths-filter step across various workflows
+# to determine if a tenant should be considered modified. It maps a tenant
+# identifier to a list of file patterns to match against.
+tft-tenant:
+  - '**/src/**'
