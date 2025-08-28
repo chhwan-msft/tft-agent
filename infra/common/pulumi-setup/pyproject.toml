@@ -1,0 +1,11 @@
+[project]
+name = "pulumi-setup"
+version = "0.0.0"
+requires-python = "==3.12.*"
+dependencies = [
+    "pulumi==3.191.0",
+    "pulumi-azure==6.25.0",
+    "pulumi-azure-native==3.7.1",
+    "pulumi-azuread==6.5.2",
+    "pyright==1.1.404",
+]

@@ -30,7 +30,7 @@ This project ingests Teamfight Tactics (TFT) Set 15 static data (Units, Traits, 
 1. Install dependencies
 
 ```
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 ```
 
 2. Configure `.env`
@@ -46,10 +46,10 @@ Fill in the values for:
 
 ### Step 1 — Generate item recipes
 
-This scrapes Mobalytics and Blitz for Set 15 recipes, maps them to CDragon nameId values, and writes the result to `src/item_components_set15.json`:
+This generates item component mappings and writes the result to `src/tft-ingest/item_components_set15.json` (or `src/item_components_set15.json` depending on how you run it):
 
 ```
-python -m src.gen_item_components
+python -m src.data.ingestion.gen_item_components
 ```
 
 If some items fail to map automatically, edit `src/item_components_set15.json` manually.
@@ -59,7 +59,7 @@ If some items fail to map automatically, edit `src/item_components_set15.json` m
 Fetch data, normalize it, upload JSONL files to blob storage, create indexes/skillsets/indexers, and run them:
 
 ```
-python -m src.main
+python -m src.data.main
 ```
 
 ### CLI flags
@@ -68,16 +68,16 @@ You can run individual steps or all steps using flags on the main script. Exampl
 
 ```
 # Run everything
-python -m src.tft_data.main --all
+python -m src.data.main --all
 
 # Fetch only
-python -m src.tft_data.main --fetch
+python -m src.data.main --fetch
 
 # Upload (will fetch first if needed)
-python -m src.tft_data.main --upload
+python -m src.data.main --upload
 
 # Create indexes only
-python -m src.tft_data.main --create-indexes
+python -m src.data.main --create-indexes
 ```
 
 What this does:

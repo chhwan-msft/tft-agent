@@ -1,0 +1,9 @@
+{
+    "tenant_identifiers": [
+        "tft-tenant"
+    ],
+    "tenant_identifiers_expected_in_subdirs_of": [
+        "infra/"
+    ],
+    "common_identifier": "common"
+}
