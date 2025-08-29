@@ -63,6 +63,24 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Preview changes
+        uses: pulumi/actions@v6
+        env:
+          # ARM_USE_OIDC: true
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.PULUMI_AZURE_STORAGE_ACCOUNT }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_ENCRYPTION_KEY }}
+        with:
+          command: preview
+          work-dir: infra/${{ matrix.tenant }}
+          stack-name: staging
+          cloud-url: azblob://${{ secrets.PULUMI_AZURE_CONTAINER }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment-on-pr: true
+          upsert: true
+
       - name: Deploy changes
         uses: pulumi/actions@v6
         env:
@@ -81,4 +99,3 @@ jobs:
           work-dir: infra/${{ matrix.tenant }}
           stack-name: staging
           cloud-url: azblob://${{ secrets.PULUMI_AZURE_CONTAINER }}
-          upsert: true
