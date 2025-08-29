@@ -11,9 +11,8 @@ from pulumi_azure_native import resources
 from pulumi_azure_native import storage
 from pulumi_azure_native import managedidentity
 
-GITHUB_REPOSITORY_OWNER = "microsoft"
-GITHUB_REPOSITORY_NAME = "fde"
-GITHUB_REPOSITORY_DEFAULT_BRANCH_NAME = "main"
+GITHUB_REPOSITORY_OWNER = "chhwan-msft"
+GITHUB_REPOSITORY_NAME = "tft-agent"
 
 OIDC_TOKEN_ISSUER = "https://token.actions.githubusercontent.com"
 OIDC_TOKEN_AUDIENCE = "api://AzureADTokenExchange"

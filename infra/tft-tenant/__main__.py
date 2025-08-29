@@ -1,19 +1,16 @@
 """Creates the infra required to use Pulumi to manage an Azure subscription via GitHub Actions."""
 
 import os
-import secrets
 from enum import StrEnum
 
 import pulumi
 import pulumi_azure
+from pulumi_azure_native import managedidentity, search, cognitiveservices
 from pulumi_azure_native import authorization
-from pulumi_azure_native import resources
-from pulumi_azure_native import storage
-from pulumi_azure_native import managedidentity
+import uuid
 
-GITHUB_REPOSITORY_OWNER = "microsoft"
-GITHUB_REPOSITORY_NAME = "fde"
-GITHUB_REPOSITORY_DEFAULT_BRANCH_NAME = "main"
+GITHUB_REPOSITORY_OWNER = "chhwan-msft"
+GITHUB_REPOSITORY_NAME = "tft-agent"
 
 OIDC_TOKEN_ISSUER = "https://token.actions.githubusercontent.com"
 OIDC_TOKEN_AUDIENCE = "api://AzureADTokenExchange"
@@ -73,126 +70,115 @@ print(f"Azure subscription ID: {azure_config.subscription_id}")
 print(f"Tenant identifier: {tenant_identifier}")
 print(f"Pulumi stack name: {stack_name}")
 
-resource_group = resources.ResourceGroup("pulumi")
-
-# Create the storage account container that will serve as the Pulumi backend
-# https://www.pulumi.com/docs/iac/concepts/state-and-backends
-storage_account = storage.StorageAccount(
-    "pulumi",
-    resource_group_name=resource_group.name,
-    kind=storage.Kind.STORAGE_V2,
-    sku=storage.SkuArgs(
-        name=storage.SkuName.STANDARD_LRS,
-    ),
-)
-container = storage.BlobContainer(
-    "backend",
-    resource_group_name=resource_group.name,
-    account_name=storage_account.name,
-)
-
-# Set up the app and role assignments for GitHub Actions <> Azure via OpenID Connect (OIDC)
-# https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-azure
-# application = azuread.Application(
-#     "github-actions",
-#     display_name="GitHub Actions",
-#     sign_in_audience="AzureADMyOrg",
-#     service_management_reference="e764d8a8-22ee-492e-82c0-62f905a66bc1",
-# )
-
 # Get already-created UMI
 identity = managedidentity.get_user_assigned_identity(
     resource_group_name=managed_identity_resource_group, resource_name=managed_identity_name
 )
 
-# Create the federated identity credential that allows the <tenant>-<environment> GitHub Actions
-# context to access Azure
-# azuread.ApplicationFederatedIdentityCredential(
-#     "credential",
-#     display_name="environment",
-#     application_id=application.object_id.apply(lambda object_id: f"/applications/{object_id}"),
-#     issuer=OIDC_TOKEN_ISSUER,
-#     audiences=[OIDC_TOKEN_AUDIENCE],
-#     subject=f"repo:{GITHUB_REPOSITORY_OWNER}/{GITHUB_REPOSITORY_NAME}:environment:{tenant_identifier}-{stack_name}",
-# )
+config = pulumi.Config()
+location = config.get("location") or "East US"
 
-# Create the federated identity credential on the UMI that allows the <tenant>-<environment> GitHub Actions
-# context to access Azure
-fic = managedidentity.FederatedIdentityCredential(
-    resource_name=identity.name,
-    resource_name_=identity.name,
-    resource_group_name=managed_identity_resource_group,
-    federated_identity_credential_resource_name="my-fic-name",
-    issuer=OIDC_TOKEN_ISSUER,
-    audiences=[OIDC_TOKEN_AUDIENCE],
-    subject=f"repo:{GITHUB_REPOSITORY_OWNER}/{GITHUB_REPOSITORY_NAME}:environment:{tenant_identifier}-{stack_name}",
+# Get already created resource group
+rg = pulumi_azure.core.ResourceGroup(
+    "DefaultResourceGroup-EUS",
+    name="DefaultResourceGroup-EUS",
+    location=location,
 )
 
-# Create the service principal
-# service_principal = azuread.ServicePrincipal(
-#     "service-principal",
-#     client_id=application.client_id,
-# )
-
-# The service principal needs the Contributor role at
-# the subscription level in order to manage resources
-authorization.RoleAssignment(
-    "role-assignment-subscription",
-    role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
-    principal_id=service_principal_object_id,
-    principal_type="ServicePrincipal",
-    scope=f"/subscriptions/{azure_config.subscription_id}",
+# ----- Storage Account -----
+stg_name = (f"chhwanstorage-pulumi-{pulumi.get_stack()}").lower()
+stg = pulumi_azure.storage.Account(
+    stg_name,
+    name=stg_name[:24],
+    location=rg.location,
+    resource_group_name=rg.name,
+    account_tier="Standard",
+    account_replication_type="LRS",
 )
-# It also needs access to the blob container serving as the Pulumi backend
-authorization.RoleAssignment(
-    "role-assignment-container",
-    role_definition_id=make_role_definition_id(BuiltInRole.STORAGE_BLOB_DATA_CONTRIBUTOR),
-    principal_id=service_principal_object_id,
-    principal_type="ServicePrincipal",
-    scope=pulumi.Output.all(
-        subscription_id=azure_config.subscription_id,
-        resource_group_name=resource_group.name,
-        storage_account_name=storage_account.name,
-        container_name=container.name,
-    ).apply(
-        lambda args: "/".join(
-            [
-                "",
-                "subscriptions",
-                args["subscription_id"],
-                "resourceGroups",
-                args["resource_group_name"],
-                "providers",
-                "Microsoft.Storage",
-                "storageAccounts",
-                args["storage_account_name"],
-                "blobServices",
-                "default",
-                "containers",
-                args["container_name"],
-            ]
-        )
+
+# Create a blob container to be used by Pulumi backend/state or uploads
+container = pulumi_azure.storage.Container(
+    "backend",
+    storage_account_name=stg.name,
+    container_access_type="private",
+)
+
+# ----- Azure Search Service -----
+service = search.Service(
+    "service",
+    hosting_mode=search.HostingMode.DEFAULT,
+    location=rg.location,
+    partition_count=1,
+    replica_count=1,
+    resource_group_name=rg.name,
+    search_service_name=f"chhwansearch-pulumi-{pulumi.get_stack()}",
+    sku={
+        "name": search.SkuName.BASIC,
+    },
+    identity=search.IdentityArgs(type="SystemAssigned"),
+)
+
+# ----- AI Foundry Project -----
+# 2) AI Foundry resource = Cognitive Services Account (kind 'AIServices')
+acct = cognitiveservices.Account(
+    f"chhwanfoundryaccount-pulumi-{pulumi.get_stack()}",
+    resource_group_name=rg.name,
+    account_name=f"chhwanfoundryaccount-pulumi-{pulumi.get_stack()}",  # must be globally unique within region
+    location=rg.location,
+    kind="AIServices",
+    sku=cognitiveservices.SkuArgs(name="S0"),
+    properties=cognitiveservices.AccountPropertiesArgs(
+        public_network_access="Enabled",  # or "Disabled" + networkAcls, etc.
+        # optional: custom_sub_domain_name="myfoundryacct123",
+    ),
+    identity=cognitiveservices.IdentityArgs(type="SystemAssigned"),
+)
+1
+# 3) Foundry Project under the Account (accounts/projects)
+proj = cognitiveservices.Project(
+    f"chhwanfoundryproject-pulumi-{pulumi.get_stack()}",
+    resource_group_name=rg.name,
+    account_name=acct.name,  # establishes dependency on the parent
+    project_name=f"chhwanfoundryproject-pulumi-{pulumi.get_stack()}",
+    location=rg.location,
+    identity=cognitiveservices.IdentityArgs(type="SystemAssigned"),
+    properties=cognitiveservices.ProjectPropertiesArgs(
+        display_name="Pulumi Foundry Project",
+        description="Created with Pulumi Azure Native",
     ),
 )
 
+# Grant the user-assigned managed identity Contributor role on Search Service and Foundry resources
+# Use azure-native authorization RoleAssignment resources; each needs a GUID name.
+search_role = authorization.RoleAssignment(
+    f"search-contributor-{pulumi.get_stack()}",
+    scope=service.id,
+    principal_id=identity.principal_id,
+    role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
+    role_assignment_name=str(uuid.uuid4()),
+)
 
-def write_secrets(args: dict[str, str]):
-    with open(f".secrets-{tenant_identifier}-{stack_name}", "w") as f:
-        # Azure OIDC
-        f.write(f"AZURE_TENANT_ID={args['tenant_id']}\n")
-        f.write(f"AZURE_SUBSCRIPTION_ID={args['subscription_id']}\n")
-        f.write(f"AZURE_CLIENT_ID={args['client_id']}\n")
+foundry_account_role = authorization.RoleAssignment(
+    f"foundry-account-contributor-{pulumi.get_stack()}",
+    scope=acct.id,
+    principal_id=identity.principal_id,
+    role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
+    role_assignment_name=str(uuid.uuid4()),
+)
 
-        # Pulumi backend
-        f.write(f"PULUMI_AZURE_STORAGE_ACCOUNT={args['storage_account_name']}\n")
-        f.write(f"PULUMI_AZURE_CONTAINER={args['container_name']}\n")
-        f.write(f"PULUMI_CONFIG_ENCRYPTION_KEY={secrets.token_hex(32)}\n")
+foundry_project_role = authorization.RoleAssignment(
+    f"foundry-project-contributor-{pulumi.get_stack()}",
+    scope=proj.id,
+    principal_id=identity.principal_id,
+    role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
+    role_assignment_name=str(uuid.uuid4()),
+)
 
-
-pulumi.Output.all(
-    client_id=identity.client_id,
-    tenant_id=azure_config.tenant_id,
-    subscription_id=azure_config.subscription_id,
-    storage_account_name=storage_account.name,
-    container_name=container.name,
-).apply(write_secrets)
+# Grant the Search service's system-assigned identity Contributor on the Foundry project
+search_service_identity_role = authorization.RoleAssignment(
+    f"search-svc-project-contributor-{pulumi.get_stack()}",
+    scope=proj.id,
+    principal_id=service.identity.principal_id,
+    role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
+    role_assignment_name=str(uuid.uuid4()),
+)
