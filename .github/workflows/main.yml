@@ -81,3 +81,4 @@ jobs:
           work-dir: infra/${{ matrix.tenant }}
           stack-name: staging
           cloud-url: azblob://${{ secrets.PULUMI_AZURE_CONTAINER }}
+          upsert: true
