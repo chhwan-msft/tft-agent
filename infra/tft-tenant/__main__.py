@@ -77,21 +77,22 @@ identity = managedidentity.get_user_assigned_identity(
 
 config = pulumi.Config()
 location = config.get("location") or "East US"
+rg_name = "DefaultResourceGroup-EUS"
 
-# Get already created resource group
-rg = pulumi_azure.core.ResourceGroup(
-    "DefaultResourceGroup-EUS",
-    name="DefaultResourceGroup-EUS",
-    location=location,
-)
+# # Get already created resource group
+# rg = pulumi_azure.core.ResourceGroup(
+#     "DefaultResourceGroup-EUS",
+#     name="DefaultResourceGroup-EUS",
+#     location=location,
+# )
 
 # ----- Storage Account -----
 stg_name = (f"chhwanpulumi{pulumi.get_stack()}").lower()
 stg = pulumi_azure.storage.Account(
     stg_name,
     name=stg_name[:24],
-    location=rg.location,
-    resource_group_name=rg.name,
+    location=location,
+    resource_group_name=rg_name,
     account_tier="Standard",
     account_replication_type="LRS",
 )
@@ -107,10 +108,10 @@ container = pulumi_azure.storage.Container(
 service = search.Service(
     "service",
     hosting_mode=search.HostingMode.DEFAULT,
-    location=rg.location,
+    location=location,
     partition_count=1,
     replica_count=1,
-    resource_group_name=rg.name,
+    resource_group_name=rg_name,
     search_service_name=f"chhwansearchpulumi{pulumi.get_stack()}",
     sku={
         "name": search.SkuName.BASIC,
@@ -122,9 +123,9 @@ service = search.Service(
 # 2) AI Foundry resource = Cognitive Services Account (kind 'AIServices')
 acct = cognitiveservices.Account(
     f"chhwanfdrypulumi{pulumi.get_stack()}",
-    resource_group_name=rg.name,
+    resource_group_name=rg_name,
     account_name=f"chhwanfdrypulumi{pulumi.get_stack()}",  # must be globally unique within region
-    location=rg.location,
+    location=location,
     kind="AIServices",
     sku=cognitiveservices.SkuArgs(name="S0"),
     properties=cognitiveservices.AccountPropertiesArgs(
@@ -137,10 +138,10 @@ acct = cognitiveservices.Account(
 # 3) Foundry Project under the Account (accounts/projects)
 proj = cognitiveservices.Project(
     f"chhwanfdryrojectpulumi{pulumi.get_stack()}",
-    resource_group_name=rg.name,
+    resource_group_name=rg_name,
     account_name=acct.name,  # establishes dependency on the parent
     project_name=f"chhwanfdryprojectpulumi{pulumi.get_stack()}",
-    location=rg.location,
+    location=location,
     identity=cognitiveservices.IdentityArgs(type=cognitiveservices.ResourceIdentityType.SYSTEM_ASSIGNED),
     properties=cognitiveservices.ProjectPropertiesArgs(
         display_name="Pulumi Foundry Project",
