@@ -87,25 +87,19 @@ rg_name = "DefaultResourceGroup-EUS"
 # )
 
 # ----- Storage Account -----
+# For storing structured TFT data in blobs, they will be used as datasources for indexers
 stg_name = (f"chhwanpulumi{pulumi.get_stack()}").lower()
-stg = pulumi_azure.storage.Account(
+storage_account = pulumi_azure.storage.StorageAccount(
     stg_name,
-    name=stg_name[:24],
-    location=location,
     resource_group_name=rg_name,
-    account_tier="Standard",
-    account_replication_type="LRS",
-    allow_blob_public_access=False,
-)
-
-# Create a blob container to be used by Pulumi backend/state or uploads
-container = pulumi_azure.storage.Container(
-    "backend",
-    storage_account_name=stg.name,
-    container_access_type="private",
+    kind=pulumi_azure.storage.Kind.STORAGE_V2,
+    sku=pulumi_azure.storage.SkuArgs(
+        name=pulumi_azure.storage.SkuName.STANDARD_LRS,
+    ),
 )
 
 # ----- Azure Search Service -----
+# For performing RAG over TFT data, to ground agent
 service = search.Service(
     "service",
     hosting_mode=search.HostingMode.DEFAULT,
