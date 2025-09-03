@@ -109,11 +109,11 @@ service = search.Service(
 
 # ----- AI Foundry Project -----
 # 2) AI Foundry resource = Cognitive Services Account (kind 'AIServices')
-# TODO: Update to azure_native_cognitiveservices_v20250601 to enable project management flag
+# TODO: Update to azure_native_cognitiveservices_v20250601 to enable project management flag + change resource name
 acct = cognitiveservices.Account(
-    f"chhwanfdryacctpulumi{pulumi.get_stack()}",
+    f"chhwanfdrypulumi{pulumi.get_stack()}",
     resource_group_name=rg_name,
-    account_name=f"chhwanfdryacctpulumi{pulumi.get_stack()}",  # must be globally unique within region
+    account_name=f"chhwanfdrypulumi{pulumi.get_stack()}",  # must be globally unique within region
     location=location,
     kind="AIServices",
     sku=cognitiveservices.SkuArgs(name="S0"),
@@ -127,7 +127,7 @@ acct = cognitiveservices.Account(
 
 # 3) Foundry Project under the Account (accounts/projects)
 proj = cognitiveservices.Project(
-    f"chhwanfdryrojectpulumi{pulumi.get_stack()}",
+    f"chhwanfdryprojectpulumi{pulumi.get_stack()}",
     resource_group_name=rg_name,
     account_name=acct.name,  # establishes dependency on the parent
     project_name=f"chhwanfdryprojectpulumi{pulumi.get_stack()}",
