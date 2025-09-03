@@ -7,7 +7,7 @@ import pulumi
 import pulumi_azure
 import uuid
 from pulumi_azure_native import managedidentity, search, cognitiveservices, authorization, storage
-import pulumi_azure_native_cognitiveservices_v20250601 as azure_native_cognitiveservices_v20250601
+# import pulumi_azure_native_cognitiveservices_v20250601 as azure_native_cognitiveservices_v20250601
 
 GITHUB_REPOSITORY_OWNER = "chhwan-msft"
 GITHUB_REPOSITORY_NAME = "tft-agent"
@@ -109,7 +109,8 @@ service = search.Service(
 
 # ----- AI Foundry Project -----
 # 2) AI Foundry resource = Cognitive Services Account (kind 'AIServices')
-acct = azure_native_cognitiveservices_v20250601.Account(
+# TODO: Update to azure_native_cognitiveservices_v20250601 to enable project management flag
+acct = cognitiveservices.Account(
     f"chhwanfdryacctpulumi{pulumi.get_stack()}",
     resource_group_name=rg_name,
     account_name=f"chhwanfdryacctpulumi{pulumi.get_stack()}",  # must be globally unique within region
@@ -118,7 +119,7 @@ acct = azure_native_cognitiveservices_v20250601.Account(
     sku=cognitiveservices.SkuArgs(name="S0"),
     properties=cognitiveservices.AccountPropertiesArgs(
         public_network_access="Enabled",  # or "Disabled" + networkAcls, etc.
-        allow_project_management=True,
+        # allow_project_management=True, # Only available in later api versions i.e. v202050601
         # optional: custom_sub_domain_name="myfoundryacct123",
     ),
     identity=cognitiveservices.IdentityArgs(type=cognitiveservices.ResourceIdentityType.SYSTEM_ASSIGNED),
