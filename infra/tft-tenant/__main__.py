@@ -7,6 +7,7 @@ import pulumi
 import pulumi_azure
 import uuid
 from pulumi_azure_native import managedidentity, search, cognitiveservices, authorization, storage
+import pulumi_azure_native_cognitiveservices_v20250601 as azure_native_cognitiveservices_v20250601
 
 GITHUB_REPOSITORY_OWNER = "chhwan-msft"
 GITHUB_REPOSITORY_NAME = "tft-agent"
@@ -108,7 +109,7 @@ service = search.Service(
 
 # ----- AI Foundry Project -----
 # 2) AI Foundry resource = Cognitive Services Account (kind 'AIServices')
-acct = cognitiveservices.Account(
+acct = azure_native_cognitiveservices_v20250601.Account(
     f"chhwanfdryacctpulumi{pulumi.get_stack()}",
     resource_group_name=rg_name,
     account_name=f"chhwanfdryacctpulumi{pulumi.get_stack()}",  # must be globally unique within region

@@ -5,3 +5,10 @@ runtime:
   options:
     toolchain: uv
     typechecker: pyright
+packages:
+  azure-native_cognitiveservices_v20250601:
+    source: azure-native
+    version: 3.7.1
+    parameters:
+      - cognitiveservices
+      - "2025-06-01"

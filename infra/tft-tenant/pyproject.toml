@@ -6,6 +6,10 @@ dependencies = [
     "pulumi==3.191.0",
     "pulumi-azure==6.25.0",
     "pulumi-azure-native==3.7.1",
+    "pulumi-azure-native-cognitiveservices-v20250601",
     "pulumi-azuread==6.5.2",
     "pyright==1.1.404",
 ]
+
+[tool.uv.sources]
+pulumi-azure-native-cognitiveservices-v20250601 = { path = "sdks/azure-native_cognitiveservices_v20250601" }
