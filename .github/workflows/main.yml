@@ -72,13 +72,17 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           AZURE_STORAGE_ACCOUNT: ${{ secrets.PULUMI_AZURE_STORAGE_ACCOUNT }}
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_ENCRYPTION_KEY }}
+          TENANT_IDENTIFIER_ENV_VAR: ${{ secrets.TENANT_IDENTIFIER }}
+          MANAGED_IDENTITY_RESOURCE_GROUP_ENV_VAR: ${{ secrets.MANAGED_IDENTITY_RESOURCE_GROUP }}
+          MANAGED_IDENTITY_NAME_ENV_VAR: ${{ secrets.MANAGED_IDENTITY_NAME }}
+          SERVICE_PRINCIPAL_OBJECT_ID_ENV_VAR: ${{ secrets.SERVICE_PRINCIPAL_OBJECT_ID }}
         with:
           command: preview
           work-dir: infra/${{ matrix.tenant }}
           stack-name: staging
           cloud-url: azblob://${{ secrets.PULUMI_AZURE_CONTAINER }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          comment-on-pr: true
+          comment-on-pr: false
           upsert: true
 
       - name: Deploy changes
