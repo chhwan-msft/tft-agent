@@ -80,9 +80,9 @@ rg_name = "DefaultResourceGroup-EUS"
 
 # ----- Storage Account -----
 # For storing structured TFT data in blobs, they will be used as datasources for indexers
-stg_name = (f"chhwanpulumi{pulumi.get_stack()}").lower()
+stg_name = "chhwanplmistg"
 storage_account = storage.StorageAccount(
-    stg_name,
+    stg_name[:24],
     resource_group_name=rg_name,
     kind=storage.Kind.STORAGE_V2,
     sku=storage.SkuArgs(
