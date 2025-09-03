@@ -47,7 +47,8 @@ if not service_principal_object_id:
 
 class BuiltInRole(StrEnum):
     CONTRIBUTOR = "b24988ac-6180-42a0-ab88-20f7382dd24c"
-    STORAGE_BLOB_DATA_CONTRIBUTOR = "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+    STORAGE_BLOB_DATA_CONTRIBUTOR = ("ba92f5b4-2d11-453d-a403-e96b0029c9fe",)
+    USER_ACCESS_ADMIN = "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9"
 
 
 def make_role_definition_id(role: BuiltInRole) -> str:
@@ -133,8 +134,8 @@ fic = managedidentity.FederatedIdentityCredential(
 #     client_id=application.client_id,
 # )
 
-# The service principal needs the Contributor role at
-# the subscription level in order to manage resources
+# The service principal needs the Contributor and User Access Admin role at
+# the subscription level in order to manage resources and give RBAC permissions
 authorization.RoleAssignment(
     "role-assignment-subscription",
     role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
@@ -142,6 +143,15 @@ authorization.RoleAssignment(
     principal_type="ServicePrincipal",
     scope=f"/subscriptions/{azure_config.subscription_id}",
 )
+authorization.RoleAssignment(
+    "role-assignment-subscription",
+    role_definition_id=make_role_definition_id(BuiltInRole.USER_ACCESS_ADMIN),
+    principal_id=service_principal_object_id,
+    principal_type="ServicePrincipal",
+    scope=f"/subscriptions/{azure_config.subscription_id}",
+    # TODO: Add condition so it can only assign Contributor role to resources
+)
+
 # It also needs access to the blob container serving as the Pulumi backend
 authorization.RoleAssignment(
     "role-assignment-container",

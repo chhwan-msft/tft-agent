@@ -109,19 +109,20 @@ service = search.Service(
 # ----- AI Foundry Project -----
 # 2) AI Foundry resource = Cognitive Services Account (kind 'AIServices')
 acct = cognitiveservices.Account(
-    f"chhwanfdrypulumi{pulumi.get_stack()}",
+    f"chhwanfdryacctpulumi{pulumi.get_stack()}",
     resource_group_name=rg_name,
-    account_name=f"chhwanfdrypulumi{pulumi.get_stack()}",  # must be globally unique within region
+    account_name=f"chhwanfdryacctpulumi{pulumi.get_stack()}",  # must be globally unique within region
     location=location,
     kind="AIServices",
     sku=cognitiveservices.SkuArgs(name="S0"),
     properties=cognitiveservices.AccountPropertiesArgs(
         public_network_access="Enabled",  # or "Disabled" + networkAcls, etc.
+        allow_project_management=True,
         # optional: custom_sub_domain_name="myfoundryacct123",
     ),
     identity=cognitiveservices.IdentityArgs(type=cognitiveservices.ResourceIdentityType.SYSTEM_ASSIGNED),
 )
-1
+
 # 3) Foundry Project under the Account (accounts/projects)
 proj = cognitiveservices.Project(
     f"chhwanfdryrojectpulumi{pulumi.get_stack()}",
