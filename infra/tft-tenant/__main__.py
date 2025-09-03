@@ -126,18 +126,19 @@ acct = cognitiveservices.Account(
 )
 
 # 3) Foundry Project under the Account (accounts/projects)
-proj = cognitiveservices.Project(
-    f"chhwanfdryprojectpulumi{pulumi.get_stack()}",
-    resource_group_name=rg_name,
-    account_name=acct.name,  # establishes dependency on the parent
-    project_name=f"chhwanfdryprojectpulumi{pulumi.get_stack()}",
-    location=location,
-    identity=cognitiveservices.IdentityArgs(type=cognitiveservices.ResourceIdentityType.SYSTEM_ASSIGNED),
-    properties=cognitiveservices.ProjectPropertiesArgs(
-        display_name="Pulumi Foundry Project",
-        description="Created with Pulumi Azure Native",
-    ),
-)
+# TODO: Create once account can support project management
+# proj = cognitiveservices.Project(
+#     f"chhwanfdryprojectpulumi{pulumi.get_stack()}",
+#     resource_group_name=rg_name,
+#     account_name=acct.name,  # establishes dependency on the parent
+#     project_name=f"chhwanfdryprojectpulumi{pulumi.get_stack()}",
+#     location=location,
+#     identity=cognitiveservices.IdentityArgs(type=cognitiveservices.ResourceIdentityType.SYSTEM_ASSIGNED),
+#     properties=cognitiveservices.ProjectPropertiesArgs(
+#         display_name="Pulumi Foundry Project",
+#         description="Created with Pulumi Azure Native",
+#     ),
+# )
 
 # Grant the user-assigned managed identity Contributor role on Search Service and Foundry resources
 # Use azure-native authorization RoleAssignment resources; each needs a GUID name.
@@ -147,6 +148,7 @@ search_role = authorization.RoleAssignment(
     principal_id=identity.principal_id,
     role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
     role_assignment_name=str(uuid.uuid4()),
+    principal_type=authorization.PrincipalType.SERVICE_PRINCIPAL,
 )
 
 foundry_account_role = authorization.RoleAssignment(
@@ -155,21 +157,25 @@ foundry_account_role = authorization.RoleAssignment(
     principal_id=identity.principal_id,
     role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
     role_assignment_name=str(uuid.uuid4()),
+    principal_type=authorization.PrincipalType.SERVICE_PRINCIPAL,
 )
 
-foundry_project_role = authorization.RoleAssignment(
-    f"fdryprojectcontributor{pulumi.get_stack()}",
-    scope=proj.id,
-    principal_id=identity.principal_id,
-    role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
-    role_assignment_name=str(uuid.uuid4()),
-)
+# TODO: Enable once foundry project is created
+# foundry_project_role = authorization.RoleAssignment(
+#     f"fdryprojectcontributor{pulumi.get_stack()}",
+#     scope=proj.id,
+#     principal_id=identity.principal_id,
+#     role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
+#     role_assignment_name=str(uuid.uuid4()),
+#     principal_type=authorization.PrincipalType.SERVICE_PRINCIPAL
+# )
 
-# Grant the Search service's system-assigned identity Contributor on the Foundry project
+# Grant the Search service's system-assigned identity Contributor on the Foundry acct
 search_service_identity_role = authorization.RoleAssignment(
     f"searchsvcprojectcontributor{pulumi.get_stack()}",
-    scope=proj.id,
+    scope=acct.id,
     principal_id=service.identity.principal_id,
     role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
     role_assignment_name=str(uuid.uuid4()),
+    principal_type=authorization.PrincipalType.SERVICE_PRINCIPAL,
 )
