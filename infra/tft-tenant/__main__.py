@@ -182,9 +182,9 @@ search_service_identity_role = authorization.RoleAssignment(
 
 # 3) Foundry model deployment under the Account
 # Choose a logical name for this deployment under the account
-deployment_name = "gpt5nano-globalstd"
+deployment_name = "gpt4o-globalstd"
 deployment = cognitiveservices.Deployment(
-    "gpt5nano-deployment",
+    "gpt4o-deployment",
     account_name=acct.name,
     resource_group_name=rg_name,
     deployment_name=deployment_name,
@@ -195,8 +195,8 @@ deployment = cognitiveservices.Deployment(
     properties=cognitiveservices.DeploymentPropertiesArgs(
         model=cognitiveservices.DeploymentModelArgs(
             format="OpenAI",  # For Azure OpenAI models
-            name="gpt-5-nano",
-            version="2025-08-07",
+            name="gpt-4o",
+            version="2024-11-20",
         ),
         # Optional dials if you want them later:
         # version_upgrade_option="OnceNewDefaultVersionAvailable",
