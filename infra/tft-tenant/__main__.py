@@ -5,9 +5,8 @@ from enum import StrEnum
 
 import pulumi
 import pulumi_azure
-from pulumi_azure_native import managedidentity, search, cognitiveservices
-from pulumi_azure_native import authorization
 import uuid
+from pulumi_azure_native import managedidentity, search, cognitiveservices, authorization, storage
 
 GITHUB_REPOSITORY_OWNER = "chhwan-msft"
 GITHUB_REPOSITORY_NAME = "tft-agent"
@@ -79,22 +78,15 @@ config = pulumi.Config()
 location = config.get("location") or "East US"
 rg_name = "DefaultResourceGroup-EUS"
 
-# # Get already created resource group
-# rg = pulumi_azure.core.ResourceGroup(
-#     "DefaultResourceGroup-EUS",
-#     name="DefaultResourceGroup-EUS",
-#     location=location,
-# )
-
 # ----- Storage Account -----
 # For storing structured TFT data in blobs, they will be used as datasources for indexers
 stg_name = (f"chhwanpulumi{pulumi.get_stack()}").lower()
-storage_account = pulumi_azure.storage.StorageAccount(
+storage_account = storage.StorageAccount(
     stg_name,
     resource_group_name=rg_name,
-    kind=pulumi_azure.storage.Kind.STORAGE_V2,
-    sku=pulumi_azure.storage.SkuArgs(
-        name=pulumi_azure.storage.SkuName.STANDARD_LRS,
+    kind=storage.Kind.STORAGE_V2,
+    sku=storage.SkuArgs(
+        name=storage.SkuName.STANDARD_LRS,
     ),
 )
 
