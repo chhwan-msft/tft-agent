@@ -86,7 +86,7 @@ rg = pulumi_azure.core.ResourceGroup(
 )
 
 # ----- Storage Account -----
-stg_name = (f"chhwanstorage-pulumi-{pulumi.get_stack()}").lower()
+stg_name = (f"chhwanpulumi{pulumi.get_stack()}").lower()
 stg = pulumi_azure.storage.Account(
     stg_name,
     name=stg_name[:24],
@@ -111,7 +111,7 @@ service = search.Service(
     partition_count=1,
     replica_count=1,
     resource_group_name=rg.name,
-    search_service_name=f"chhwansearch-pulumi-{pulumi.get_stack()}",
+    search_service_name=f"chhwansearchpulumi{pulumi.get_stack()}",
     sku={
         "name": search.SkuName.BASIC,
     },
@@ -121,9 +121,9 @@ service = search.Service(
 # ----- AI Foundry Project -----
 # 2) AI Foundry resource = Cognitive Services Account (kind 'AIServices')
 acct = cognitiveservices.Account(
-    f"chhwanfoundryaccount-pulumi-{pulumi.get_stack()}",
+    f"chhwanfdrypulumi{pulumi.get_stack()}",
     resource_group_name=rg.name,
-    account_name=f"chhwanfoundryaccount-pulumi-{pulumi.get_stack()}",  # must be globally unique within region
+    account_name=f"chhwanfdrypulumi{pulumi.get_stack()}",  # must be globally unique within region
     location=rg.location,
     kind="AIServices",
     sku=cognitiveservices.SkuArgs(name="S0"),
@@ -136,10 +136,10 @@ acct = cognitiveservices.Account(
 1
 # 3) Foundry Project under the Account (accounts/projects)
 proj = cognitiveservices.Project(
-    f"chhwanfoundryproject-pulumi-{pulumi.get_stack()}",
+    f"chhwanfdryrojectpulumi{pulumi.get_stack()}",
     resource_group_name=rg.name,
     account_name=acct.name,  # establishes dependency on the parent
-    project_name=f"chhwanfoundryproject-pulumi-{pulumi.get_stack()}",
+    project_name=f"chhwanfdryprojectpulumi{pulumi.get_stack()}",
     location=rg.location,
     identity=cognitiveservices.IdentityArgs(type=cognitiveservices.ResourceIdentityType.SYSTEM_ASSIGNED),
     properties=cognitiveservices.ProjectPropertiesArgs(
@@ -151,7 +151,7 @@ proj = cognitiveservices.Project(
 # Grant the user-assigned managed identity Contributor role on Search Service and Foundry resources
 # Use azure-native authorization RoleAssignment resources; each needs a GUID name.
 search_role = authorization.RoleAssignment(
-    f"search-contributor-{pulumi.get_stack()}",
+    f"searchcontributor{pulumi.get_stack()}",
     scope=service.id,
     principal_id=identity.principal_id,
     role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
@@ -159,7 +159,7 @@ search_role = authorization.RoleAssignment(
 )
 
 foundry_account_role = authorization.RoleAssignment(
-    f"foundry-account-contributor-{pulumi.get_stack()}",
+    f"fdryaccountcontributor{pulumi.get_stack()}",
     scope=acct.id,
     principal_id=identity.principal_id,
     role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
@@ -167,7 +167,7 @@ foundry_account_role = authorization.RoleAssignment(
 )
 
 foundry_project_role = authorization.RoleAssignment(
-    f"foundry-project-contributor-{pulumi.get_stack()}",
+    f"fdryprojectcontributor{pulumi.get_stack()}",
     scope=proj.id,
     principal_id=identity.principal_id,
     role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
@@ -176,7 +176,7 @@ foundry_project_role = authorization.RoleAssignment(
 
 # Grant the Search service's system-assigned identity Contributor on the Foundry project
 search_service_identity_role = authorization.RoleAssignment(
-    f"search-svc-project-contributor-{pulumi.get_stack()}",
+    f"searchsvcprojectcontributor{pulumi.get_stack()}",
     scope=proj.id,
     principal_id=service.identity.principal_id,
     role_definition_id=make_role_definition_id(BuiltInRole.CONTRIBUTOR),
