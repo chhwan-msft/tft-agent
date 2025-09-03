@@ -131,7 +131,7 @@ acct = cognitiveservices.Account(
         public_network_access="Enabled",  # or "Disabled" + networkAcls, etc.
         # optional: custom_sub_domain_name="myfoundryacct123",
     ),
-    identity=search.IdentityArgs(type=search.IdentityType.SYSTEM_ASSIGNED),
+    identity=cognitiveservices.IdentityArgs(type=cognitiveservices.ResourceIdentityType.SYSTEM_ASSIGNED),
 )
 1
 # 3) Foundry Project under the Account (accounts/projects)
@@ -141,7 +141,7 @@ proj = cognitiveservices.Project(
     account_name=acct.name,  # establishes dependency on the parent
     project_name=f"chhwanfoundryproject-pulumi-{pulumi.get_stack()}",
     location=rg.location,
-    identity=search.IdentityArgs(type=search.IdentityType.SYSTEM_ASSIGNED),
+    identity=cognitiveservices.IdentityArgs(type=cognitiveservices.ResourceIdentityType.SYSTEM_ASSIGNED),
     properties=cognitiveservices.ProjectPropertiesArgs(
         display_name="Pulumi Foundry Project",
         description="Created with Pulumi Azure Native",
