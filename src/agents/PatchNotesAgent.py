@@ -14,7 +14,7 @@ from semantic_kernel.functions import kernel_function
 from utils.rag_tool import ground_text_and_add_to_history
 
 system_prompt = """
-You are an expert in parsing and analyzing Teamfight Tactics patch notes. Your job is:
+You are an expert in parsing and analyzing Teamfight Tactics patch notes. Your job is to:
 
 - Extract and summarize buffs, nerfs, reworks, and system changes.
 - Highlight the most impactful changes.
