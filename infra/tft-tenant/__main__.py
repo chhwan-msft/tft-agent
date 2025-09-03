@@ -95,6 +95,7 @@ stg = pulumi_azure.storage.Account(
     resource_group_name=rg_name,
     account_tier="Standard",
     account_replication_type="LRS",
+    allow_blob_public_access=False,
 )
 
 # Create a blob container to be used by Pulumi backend/state or uploads
