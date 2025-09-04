@@ -7,7 +7,8 @@ import pulumi
 import pulumi_azure
 import uuid
 from pulumi_azure_native import managedidentity, search, cognitiveservices, authorization, storage
-# import pulumi_azure_native_cognitiveservices_v20250601 as azure_native_cognitiveservices_v20250601
+import pulumi_azure_native_cognitiveservices_v20250601 as azure_native_cognitiveservices_v20250601
+# import __editable___pulumi_azure_native_cognitiveservices_v20250601_3_7_1_finder as azure_native_cognitiveservices_v20250601
 
 GITHUB_REPOSITORY_OWNER = "chhwan-msft"
 GITHUB_REPOSITORY_NAME = "tft-agent"
@@ -110,35 +111,37 @@ service = search.Service(
 # ----- AI Foundry Project -----
 # 2) AI Foundry resource = Cognitive Services Account (kind 'AIServices')
 # TODO: Update to azure_native_cognitiveservices_v20250601 to enable project management flag + change resource name
-acct = cognitiveservices.Account(
-    f"chhwanfdrypulumi{pulumi.get_stack()}",
+acct = azure_native_cognitiveservices_v20250601.Account(
+    f"chhwanfdryv2pulumi{pulumi.get_stack()}",
     resource_group_name=rg_name,
-    account_name=f"chhwanfdrypulumi{pulumi.get_stack()}",  # must be globally unique within region
+    account_name=f"chhwanfdryv2pulumi{pulumi.get_stack()}",  # must be globally unique within region
     location=location,
     kind="AIServices",
-    sku=cognitiveservices.SkuArgs(name="S0"),
-    properties=cognitiveservices.AccountPropertiesArgs(
+    sku=azure_native_cognitiveservices_v20250601.SkuArgs(name="S0"),
+    properties=azure_native_cognitiveservices_v20250601.AccountPropertiesArgs(
         public_network_access="Enabled",  # or "Disabled" + networkAcls, etc.
         # allow_project_management=True, # Only available in later api versions i.e. v202050601
         # optional: custom_sub_domain_name="myfoundryacct123",
     ),
-    identity=cognitiveservices.IdentityArgs(type=cognitiveservices.ResourceIdentityType.SYSTEM_ASSIGNED),
+    identity=azure_native_cognitiveservices_v20250601.IdentityArgs(
+        type=azure_native_cognitiveservices_v20250601.ResourceIdentityType.SYSTEM_ASSIGNED
+    ),
 )
 
 # 3) Foundry Project under the Account (accounts/projects)
 # TODO: Create once account can support project management
-# proj = cognitiveservices.Project(
-#     f"chhwanfdryprojectpulumi{pulumi.get_stack()}",
-#     resource_group_name=rg_name,
-#     account_name=acct.name,  # establishes dependency on the parent
-#     project_name=f"chhwanfdryprojectpulumi{pulumi.get_stack()}",
-#     location=location,
-#     identity=cognitiveservices.IdentityArgs(type=cognitiveservices.ResourceIdentityType.SYSTEM_ASSIGNED),
-#     properties=cognitiveservices.ProjectPropertiesArgs(
-#         display_name="Pulumi Foundry Project",
-#         description="Created with Pulumi Azure Native",
-#     ),
-# )
+proj = cognitiveservices.Project(
+    f"chhwanfdryprojectpulumi{pulumi.get_stack()}",
+    resource_group_name=rg_name,
+    account_name=acct.name,  # establishes dependency on the parent
+    project_name=f"chhwanfdryprojectpulumi{pulumi.get_stack()}",
+    location=location,
+    identity=cognitiveservices.IdentityArgs(type=cognitiveservices.ResourceIdentityType.SYSTEM_ASSIGNED),
+    properties=cognitiveservices.ProjectPropertiesArgs(
+        display_name="Pulumi Foundry Project",
+        description="Created with Pulumi Azure Native",
+    ),
+)
 
 # Grant the user-assigned managed identity Contributor role on Search Service and Foundry resources
 # Use azure-native authorization RoleAssignment resources; each needs a GUID name.

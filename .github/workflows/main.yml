@@ -51,17 +51,25 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Install Pulumi CLI
+        shell: bash
+        run: |
+          curl -fsSL https://get.pulumi.com | sh
+          echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
+          pulumi version
+
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
           version: '0.8.9'
 
       # Generate the local SDK for the API version you need
-      # - name: Generate local Azure Native SDK (cognitiveservices 2025-06-01)
-      #   run: pulumi package add azure-native cognitiveservices 2025-06-01 --non-interactive --cwd infra/tft-tenant --system
+      - name: Generate local Azure Native SDK (cognitiveservices 2025-06-01)
+        run: pulumi package add azure-native cognitiveservices 2025-06-01 --non-interactive --cwd infra/tft-tenant --system
 
-      # - name: Reference local Azure Native SDK
-      #   run: uv pip install -e infra/tft-tenant/sdks/azure-native_cognitiveservices_v20250601
+      # Install local SDK
+      - name: Reference local Azure Native SDK
+        run: uv sync
 
       - name: Login to Azure
         uses: azure/login@v2
