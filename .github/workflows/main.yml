@@ -69,6 +69,7 @@ jobs:
 
       # Install local SDK
       - name: Reference local Azure Native SDK
+        working-directory: infra/tft-tenant
         run: uv sync
 
       - name: Login to Azure
