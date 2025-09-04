@@ -65,7 +65,7 @@ jobs:
 
       # Generate the local SDK for the API version you need
       - name: Generate local Azure Native SDK (cognitiveservices 2025-06-01)
-        run: pulumi package add azure-native cognitiveservices 2025-06-01 --non-interactive --cwd infra/tft-tenant --system
+        run: pulumi package add azure-native cognitiveservices 2025-06-01 --non-interactive --cwd infra/tft-tenant
 
       # Install local SDK
       - name: Reference local Azure Native SDK
